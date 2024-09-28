@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "id": "econgrowth",
+  "version": "${version}",
+  "name": "EconGrowth",
+  "description": "This is an example description! Tell everyone what your mod is about!",
+  "authors": [
+    "Me!"
+  ],
+  "contact": {
+    "homepage": "https://fabricmc.net/",
+    "sources": "https://github.com/FabricMC/fabric-example-mod"
+  },
+  "license": "SSS-1.0",
+  "icon": "assets/econgrowth/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      {
+        "adapter": "kotlin",
+        "value": "net.rk4z.econgrowth.EconGrowth"
+      }
+    ],
+    "client": [
+      {
+        "adapter": "kotlin",
+        "value": "net.rk4z.econgrowth.client.EconGrowthClient"
+      }
+    ]
+  },
+  "mixins": [
+    "econgrowth.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.16.5",
+    "minecraft": "~1.21",
+    "java": ">=21",
+    "architectury": ">=13.0.2",
+    "fabric-api": "*"
+  }
+}
