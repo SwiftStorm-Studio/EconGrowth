@@ -1,0 +1,16 @@
+{
+  "required": true,
+  "package": "net.rk4z.econgrowth.mixins",
+  "compatibilityLevel": "JAVA_21",
+  "server": [
+    "MinecraftServerMixin"
+  ],
+  "client": [
+    "MinecraftClientMixin"
+  ],
+  "mixins": [
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

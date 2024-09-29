@@ -45,6 +45,8 @@ dependencies {
     modImplementation(libs.fabric.api)
     modImplementation(libs.fabric.kotlin)
     modImplementation(libs.architectury.fabric)
+
+    implementation("net.rk4z:beacon:1.4.5")
     "common"(project(path = ":integration:mod:common", configuration = "namedElements")) { isTransitive = false }
     "shadowBundle"(project(path = ":integration:mod:common", configuration = "transformProductionFabric"))
 }

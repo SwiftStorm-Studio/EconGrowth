@@ -5,28 +5,19 @@
   "name": "EconGrowth",
   "description": "This is an example description! Tell everyone what your mod is about!",
   "authors": [
-    "Me!"
+    "Lars",
+    "cotrin_d8"
   ],
   "contact": {
     "homepage": "https://fabricmc.net/",
     "sources": "https://github.com/FabricMC/fabric-example-mod"
   },
-  "license": "SSS-1.0",
+  "license": "S1-0.1",
   "icon": "assets/econgrowth/icon.png",
   "environment": "*",
   "entrypoints": {
-    "main": [
-      {
-        "adapter": "kotlin",
-        "value": "net.rk4z.econgrowth.EconGrowth"
-      }
-    ],
-    "client": [
-      {
-        "adapter": "kotlin",
-        "value": "net.rk4z.econgrowth.client.EconGrowthClient"
-      }
-    ]
+
+
   },
   "mixins": [
     "econgrowth.mixins.json"
