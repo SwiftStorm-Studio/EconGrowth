@@ -16,8 +16,24 @@
   "icon": "assets/econgrowth/icon.png",
   "environment": "*",
   "entrypoints": {
-
-
+    "main": [
+      {
+        "value": "net.rk4z.econgrowth.EconGrowth",
+        "adapter": "kotlin"
+      }
+    ],
+    "client": [
+      {
+        "value": "net.rk4z.econgrowth.client.EconGrowthClient",
+        "adapter": "kotlin"
+      }
+    ],
+    "server": [
+      {
+        "value": "net.rk4z.econgrowth.server.EconGrowthServer",
+        "adapter": "kotlin"
+      }
+    ]
   },
   "mixins": [
     "econgrowth.mixins.json"
