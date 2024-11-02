@@ -12,7 +12,7 @@
     "homepage": "https://fabricmc.net/",
     "sources": "https://github.com/FabricMC/fabric-example-mod"
   },
-  "license": "S1-0.1",
+  "license": "*Not Implemented yet*",
   "icon": "assets/econgrowth/icon.png",
   "environment": "*",
   "entrypoints": {
