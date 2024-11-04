@@ -7,5 +7,5 @@ plugins {
 dependencies {
     paperweight.paperDevBundle("1.21.3-R0.1-SNAPSHOT")
     compileOnly("io.papermc.paper:paper-api:1.21.3-R0.1-SNAPSHOT")
-    implementation("net.rk4z.s1:pluginbase:1.1.3")
+    implementation("net.rk4z.s1:pluginbase:1.1.7")
 }
