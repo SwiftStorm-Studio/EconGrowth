@@ -1,6 +1,8 @@
 package net.rk4z.s1.econgrowth.utils
 
 import java.util.*
+import java.nio.ByteBuffer
+import java.util.Base64
 
 /**
  * A utility class for handling UUIDs and their shorter string representations.
@@ -19,8 +21,7 @@ class ShortUUID private constructor(
          */
         fun randomUUID(): ShortUUID {
             val uuid = UUID.randomUUID()
-            val shortUUID = ShortUUID(uuid, null).toShortString()
-            return ShortUUID(uuid, shortUUID)
+            return ShortUUID(uuid, null)
         }
 
         /**
@@ -28,7 +29,7 @@ class ShortUUID private constructor(
          * @param uuid The UUID string.
          * @return A new ShortUUID instance.
          */
-        fun fromString(uuid: String): ShortUUID {
+        fun fromUUIDString(uuid: String): ShortUUID {
             return ShortUUID(UUID.fromString(uuid), null)
         }
 
@@ -38,6 +39,7 @@ class ShortUUID private constructor(
          * @return A new ShortUUID instance.
          */
         fun fromShortString(shortString: String): ShortUUID {
+            require(isValidShortString(shortString)) { "Invalid short string for UUID" }
             return ShortUUID(null, shortString)
         }
 
@@ -61,7 +63,8 @@ class ShortUUID private constructor(
          * @return A new ShortUUID instance.
          */
         fun fromByteArray(byteArray: ByteArray): ShortUUID {
-            val bb = java.nio.ByteBuffer.wrap(byteArray)
+            require(byteArray.size == 16) { "Byte array must be exactly 16 bytes long" }
+            val bb = ByteBuffer.wrap(byteArray)
             val high = bb.long
             val low = bb.long
             return ShortUUID(UUID(high, low))
@@ -74,7 +77,7 @@ class ShortUUID private constructor(
          */
         fun fromAny(value: Any): ShortUUID? {
             return when (value) {
-                is String -> if (isValidShortString(value)) fromShortString(value) else fromString(value)
+                is String -> if (isValidShortString(value)) fromShortString(value) else fromUUIDString(value)
                 is UUID -> ShortUUID(value, null)
                 is ShortUUID -> value
                 else -> null
@@ -82,46 +85,32 @@ class ShortUUID private constructor(
         }
     }
 
+    // UUID and short string representations cached using lazy initialization
+    private val computedUUID: UUID? by lazy { uuid ?: decodeShortStringToUUID() }
+    private val computedShortString: String by lazy { shortString ?: encodeUUIDToShortString() }
+
     private constructor(uuid: UUID) : this(uuid, null)
 
     /**
      * Converts the ShortUUID to a standard UUID.
      * @return The UUID or null if conversion is not possible.
      */
-    fun toUUID(): UUID? {
-        if (uuid != null) {
-            return uuid
-        }
-        return shortString?.let {
-            val bytes = Base64.getUrlDecoder().decode(it)
-            val bb = java.nio.ByteBuffer.wrap(bytes)
-            val high = bb.long
-            val low = bb.long
-            return UUID(high, low)
-        }
-    }
+    fun toUUID(): UUID? = computedUUID
 
     /**
      * Converts the ShortUUID to its short string representation.
      * @return The short string representation of the UUID.
      */
-    fun toShortString(): String {
-        if (shortString != null) {
-            return shortString
-        }
-        val bb = java.nio.ByteBuffer.wrap(ByteArray(16))
-        bb.putLong(uuid!!.mostSignificantBits)
-        bb.putLong(uuid.leastSignificantBits)
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(bb.array())
-    }
+    fun toShortString(): String = computedShortString
 
     /**
      * Converts the ShortUUID to a byte array.
      * @return The byte array representation of the UUID.
      */
     fun toByteArray(): ByteArray {
-        val bb = java.nio.ByteBuffer.wrap(ByteArray(16))
-        bb.putLong(uuid!!.mostSignificantBits)
+        val bb = ByteBuffer.wrap(ByteArray(16))
+        val uuid = computedUUID ?: throw IllegalStateException("UUID is not initialized")
+        bb.putLong(uuid.mostSignificantBits)
         bb.putLong(uuid.leastSignificantBits)
         return bb.array()
     }
@@ -131,7 +120,7 @@ class ShortUUID private constructor(
      * @return The string representation of the UUID or short string.
      */
     override fun toString(): String {
-        return uuid?.toString() ?: shortString ?: ""
+        return computedUUID?.toString() ?: computedShortString
     }
 
     /**
@@ -142,7 +131,6 @@ class ShortUUID private constructor(
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is ShortUUID) return false
-
         return this.toUUID() == other.toUUID()
     }
 
@@ -151,7 +139,7 @@ class ShortUUID private constructor(
      * @return The hash code.
      */
     override fun hashCode(): Int {
-        return toUUID()?.hashCode() ?: shortString.hashCode()
+        return toUUID()?.hashCode() ?: computedShortString.hashCode()
     }
 
     /**
@@ -162,5 +150,24 @@ class ShortUUID private constructor(
      */
     override fun compareTo(other: ShortUUID): Int {
         return this.toUUID()?.compareTo(other.toUUID()) ?: 0
+    }
+
+    // Private helper method to decode short string to UUID
+    private fun decodeShortStringToUUID(): UUID? {
+        return shortString?.let {
+            val bytes = Base64.getUrlDecoder().decode(it)
+            val bb = ByteBuffer.wrap(bytes)
+            val high = bb.long
+            val low = bb.long
+            UUID(high, low)
+        }
+    }
+
+    // Private helper method to encode UUID to short string
+    private fun encodeUUIDToShortString(): String {
+        val bb = ByteBuffer.wrap(ByteArray(16))
+        bb.putLong(uuid!!.mostSignificantBits)
+        bb.putLong(uuid.leastSignificantBits)
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(bb.array())
     }
 }

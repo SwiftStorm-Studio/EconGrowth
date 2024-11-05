@@ -1,0 +1,3 @@
+system:
+  error:
+    server_should_be_paper: "このプラグインはPaper/Purpurサーバー向けに設計されています。Bukkit/Spigotサーバーでは動作しません。使用中のサーバー: %s"
