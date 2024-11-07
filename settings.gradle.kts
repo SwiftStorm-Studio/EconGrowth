@@ -4,6 +4,7 @@ pluginManagement {
         maven("https://maven.architectury.dev/")
         maven("https://files.minecraftforge.net/maven/")
         gradlePluginPortal()
+        mavenLocal()
     }
 }
 

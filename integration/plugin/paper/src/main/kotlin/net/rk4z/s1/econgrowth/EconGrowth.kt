@@ -1,9 +1,9 @@
 package net.rk4z.s1.econgrowth
 
 import net.rk4z.s1.econgrowth.utils.System
-import net.rk4z.s1.pluginBase.LanguageManager
-import net.rk4z.s1.pluginBase.Logger
-import net.rk4z.s1.pluginBase.PluginEntry
+import net.rk4z.s1.swiftbase.LanguageManager
+import net.rk4z.s1.swiftbase.Logger
+import net.rk4z.s1.swiftbase.PluginEntry
 import org.bukkit.Bukkit
 
 @Suppress("unused")

@@ -2,15 +2,14 @@ package net.rk4z.s1.econgrowth
 
 import net.rk4z.s1.econgrowth.utils.PlayerRegInfo
 import net.rk4z.s1.econgrowth.utils.ShortUUID
-import net.rk4z.s1.pluginBase.Logger
-import net.rk4z.s1.pluginBase.PluginEntry
+import net.rk4z.s1.swiftbase.Logger
+import net.rk4z.s1.swiftbase.PluginEntry
 import java.sql.Connection
 import java.sql.DriverManager
 import java.sql.SQLException
 
 @Suppress("SqlNoDataSourceInspection", "SqlResolve")
 class DataBase(private val plugin: PluginEntry) {
-
     private var connection: Connection? = null
 
     fun connectToDatabase(): Boolean {

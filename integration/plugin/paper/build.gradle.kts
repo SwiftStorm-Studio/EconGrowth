@@ -10,7 +10,7 @@ dependencies {
     paperweight.paperDevBundle("1.21.3-R0.1-SNAPSHOT")
     compileOnly("io.papermc.paper:paper-api:1.21.3-R0.1-SNAPSHOT")
 
-   library("net.rk4z.s1:pluginbase:1.1.9")
+    library("net.rk4z.s1:swiftbase:1.2.0")
 }
 
 bukkit {
