@@ -1,34 +1,69 @@
 [versions]
-loom = "1.6-SNAPSHOT"
+kotlin = "2.0.21"
+
+minecraft = "1.21.3"
+
+
+# > Architectury < #
 architecturyPlugin = "3.4-SNAPSHOT"
-shadow = "8.1.1"
-minecraft = "1.21"
+architecturyLoom = "1.6-SNAPSHOT"
 architecturyApi = "13.0.2"
-yarnNeoforge = "1.21+build.4"
-yarnFabric = "1.21+build.1:v2"
-fabricLoader = "0.16.5"
-fabricApi = "0.102.0+1.21"
-fabricKotlin = "1.12.1+kotlin.2.0.20"
-neoforge = "21.0.42-beta"
-kotlinforforge = "5.5.0"
-kotlin = "2.0.20"
+# > ------------ < #
+
+
+# > Fabric < #
+fabricLoader = "0.16.9"
+fabricApi = "0.107.0+1.21.3"
+fabricKotlin = "1.12.3+kotlin.2.0.21"
+fabricYarn = "1.21.3+build.2"
+# > ------ < #
+
+
+# > Neoforge < #
+neoforgeApi = "21.3.5-beta"
+neoforgeYarn = "1.21+build.4"
+neoforgeKotlin = "5.5.0"
+# > --------- < #
+
+
+paperYAML = "0.6.0"
+runPaper = "2.3.0"
+paperWeight = "1.7.1"
 
 [libraries]
 minecraft = { module = "net.minecraft:minecraft", version.ref = "minecraft" }
-yarnNeoforge = { module = "dev.architectury:yarn-mappings-patch-neoforge", version.ref = "yarnNeoforge" }
+
+
+# > Architectury < #
+architectury-api = { module = "dev.architectury:architectury", version.ref = "architecturyApi" }
+architectury-fabric = { module = "dev.architectury:architectury-fabric", version.ref = "architecturyApi" }
+architectury-neoforge = { module = "dev.architectury:architectury-neoforge", version.ref = "architecturyApi" }
+#> ------------- <#
+
+
+# > Fabric < #
 fabric-loader = { module = "net.fabricmc:fabric-loader", version.ref = "fabricLoader" }
 fabric-api = { module = "net.fabricmc.fabric-api:fabric-api", version.ref = "fabricApi" }
 fabric-kotlin = { module = "net.fabricmc:fabric-language-kotlin", version.ref = "fabricKotlin" }
-architectury-fabric = { module = "dev.architectury:architectury-fabric", version.ref = "architecturyApi" }
-architectury-neoforge = { module = "dev.architectury:architectury-neoforge", version.ref = "architecturyApi" }
-architectury = { module = "dev.architectury:architectury", version.ref = "architecturyApi" }
-neoforge = { module = "net.neoforged:neoforge", version.ref = "neoforge" }
-kotlinforforge = { module = "thedarkcolour:kotlinforforge-neoforge", version.ref = "kotlinforforge" }
+fabric-yarn = { module = "net.fabricmc:yarn", version.ref = "fabricYarn"  }
+# > ------ < #
+
+
+# > Neoforge < #
+neoforge-api = { module = "net.neoforged:neoforge", version.ref = "neoforgeApi" }
+neoforge-kotlin = { module = "thedarkcolour:kotlinforforge-neoforge", version.ref = "neoforgeKotlin" }
+neoforge-yarn = { module = "dev.architectury:yarn-mappings-patch-neoforge", version.ref = "neoforgeYarn" }
+# > --------- < #
+
 
 [plugins]
-loom = { id = "dev.architectury.loom", version.ref = "loom" }
-architectury = { id = "architectury-plugin", version.ref = "architecturyPlugin" }
-shadow = { id = "com.github.johnrengelman.shadow", version.ref = "shadow" }
 kotlin = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+
+architectury-loom = { id = "dev.architectury.loom", version.ref = "architecturyLoom" }
+architectury-plugin = { id = "architectury-plugin", version.ref = "architecturyPlugin" }
+
+paperYAML = { id = "net.minecrell.plugin-yml.paper", version.ref = "paperYAML" }
+runPaper = { id = "xyz.jpenilla.run-paper", version.ref = "runPaper" }
+paperWeight = { id = "io.papermc.paperweight.userdev", version.ref = "paperWeight" }
 
 [bundles]

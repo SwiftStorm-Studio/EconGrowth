@@ -7,10 +7,10 @@ architectury {
 dependencies {
     minecraft(libs.minecraft)
     mappings(loom.layered {
-        mappings("net.fabricmc:yarn:${libs.versions.yarnFabric.get()}")
-        mappings(libs.yarnNeoforge)
+        mappings(libs.fabric.yarn)
+        mappings(libs.neoforge.yarn)
     })
 
     modImplementation(libs.fabric.loader)
-    modImplementation(libs.architectury)
+    modImplementation(libs.architectury.api)
 }

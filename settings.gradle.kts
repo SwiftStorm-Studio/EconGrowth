@@ -4,18 +4,18 @@ pluginManagement {
         maven("https://maven.architectury.dev/")
         maven("https://files.minecraftforge.net/maven/")
         gradlePluginPortal()
+        mavenCentral()
         mavenLocal()
     }
 }
 
-rootProject.name = "econgrowth"
+rootProject.name = "EconGrowth"
 
-include(":integration")
-include(":integration:mod")
-include(":integration:mod:common")
-include(":integration:mod:fabric")
-include(":integration:mod:neoforge")
-include(":integration:plugin")
-include(":integration:plugin:paper")
-include(":integration:plugin:velocity")
-include(":integration:plugin:bungee")
+include(":integrations")
+//include(":integrations:core")
+
+include(":integrations:mod")
+include(":integrations:mod:fabric")
+include(":integrations:mod:neoforge")
+include(":integrations:mod:common")
+include(":integrations:plugin")

@@ -1,8 +1,0 @@
-{
-  "required": true,
-  "package": "net.rk4z.econgrowth.mixins",
-  "compatibilityLevel": "JAVA_21",
-  "injectors": {
-    "defaultRequire": 1
-  }
-}

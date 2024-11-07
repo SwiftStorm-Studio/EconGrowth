@@ -1,9 +1,0 @@
-plugins {
-    id 'dev.architectury.loom' version '1.6-SNAPSHOT' apply false
-    id 'architectury-plugin' version '3.4-SNAPSHOT' apply false
-    id 'com.github.johnrengelman.shadow' version '8.1.1' apply false
-    id 'org.jetbrains.kotlin.jvm' version '2.0.20' apply false
-}
-
-group = 'net.rk4z.s1'
-version = '1.0.0'

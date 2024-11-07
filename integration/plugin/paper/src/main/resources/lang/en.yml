@@ -1,3 +1,0 @@
-system:
-  error:
-    server_should_be_paper: "This plugin is designed for Paper/Purpur servers. It does not work on Bukkit/Spigot servers. Server in use: %s"
