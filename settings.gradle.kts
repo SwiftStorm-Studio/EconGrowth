@@ -12,10 +12,15 @@ pluginManagement {
 rootProject.name = "EconGrowth"
 
 include(":integrations")
-//include(":integrations:core")
+include(":integrations:core")
 
 include(":integrations:mod")
+include(":integrations:mod:common")
 include(":integrations:mod:fabric")
 include(":integrations:mod:neoforge")
-include(":integrations:mod:common")
+
+
 include(":integrations:plugin")
+include(":integrations:plugin:paper")
+include(":integrations:plugin:bungee")
+include(":integrations:plugin:velocity")

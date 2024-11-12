@@ -10,7 +10,7 @@ subprojects {
     apply(plugin = "dev.architectury.loom")
     apply(plugin = "architectury-plugin")
 
-//    dependencies {
-//        compileOnly(project(":integrations:core"))
-//    }
+    dependencies {
+        implementation(project(":integrations:core"))
+    }
 }

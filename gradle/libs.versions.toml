@@ -1,12 +1,15 @@
 [versions]
 kotlin = "2.0.21"
+paperYAML = "0.6.0"
+runPaper = "2.3.0"
+paperWeight = "1.7.1"
 
 minecraft = "1.21.3"
 
 
 # > Architectury < #
 architecturyPlugin = "3.4-SNAPSHOT"
-architecturyLoom = "1.6-SNAPSHOT"
+architecturyLoom = "1.7-SNAPSHOT"
 architecturyApi = "13.0.2"
 # > ------------ < #
 
@@ -25,13 +28,17 @@ neoforgeYarn = "1.21+build.4"
 neoforgeKotlin = "5.5.0"
 # > --------- < #
 
+# > Paper < #
+paperApi = "1.21.3-R0.1-SNAPSHOT"
+# > ------ < #
 
-paperYAML = "0.6.0"
-runPaper = "2.3.0"
-paperWeight = "1.7.1"
 
 [libraries]
 minecraft = { module = "net.minecraft:minecraft", version.ref = "minecraft" }
+
+swiftbase-core = { module = "net.rk4z.s1:swiftbase-core", version = "1.1.6" }
+swiftbase-paper = { module = "net.rk4z.s1:swiftbase-paper", version = "1.1.5" }
+swiftbase-fabric = { module = "net.rk4z.s1:swiftbase-fabric", version = "1.1.4" }
 
 
 # > Architectury < #
@@ -54,6 +61,9 @@ neoforge-api = { module = "net.neoforged:neoforge", version.ref = "neoforgeApi" 
 neoforge-kotlin = { module = "thedarkcolour:kotlinforforge-neoforge", version.ref = "neoforgeKotlin" }
 neoforge-yarn = { module = "dev.architectury:yarn-mappings-patch-neoforge", version.ref = "neoforgeYarn" }
 # > --------- < #
+
+# > Paper < #
+paper-api = { module = "io.papermc.paper:paper-api", version.ref = "paperApi" }
 
 
 [plugins]

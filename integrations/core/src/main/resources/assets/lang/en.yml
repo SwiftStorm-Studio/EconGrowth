@@ -1,0 +1,20 @@
+langVersion: 1.0
+
+system:
+  log:
+    loading: "Loading %s v%s..."
+    enabling: "Enabling %s v%s..."
+    disabling: "Disabling %s v%s..."
+    checking_update: "Checking for updates..."
+    all_version_count: "There are %s available versions."
+    new_version_count: "There are %s newer versions than the current one."
+    latest_version_found: "A new version (%s) is available! You are using version %s."
+    view_latest_ver: "View the latest version here: %s"
+    you_are_using_latest: "You are using the latest version of BulletinBoard."
+    failed_to_check_update: "Failed to check for updates: %s"
+    error_while_checking_update: "An error occurred while checking for updates: %s"
+    language_file_not_found: "Language file for %s not found!"
+    other:
+      unknown: "Unknown"
+      unknown_error: "An unknown error has occurred."
+      error: "Error"

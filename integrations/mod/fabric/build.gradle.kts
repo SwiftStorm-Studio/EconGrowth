@@ -19,11 +19,6 @@ configurations {
     val developmentFabric by getting {
         extendsFrom(common)
     }
-
-    val shadowBundle by creating {
-        isCanBeResolved = true
-        isCanBeConsumed = false
-    }
 }
 
 @Suppress("UnstableApiUsage")
@@ -33,7 +28,9 @@ dependencies {
         mappings(libs.fabric.yarn)
         mappings(libs.neoforge.yarn)
     })
+    modImplementation(libs.fabric.loader)
+    modImplementation(libs.fabric.api)
+    modImplementation(libs.fabric.kotlin)
 
     "common"(project(path = ":integrations:mod:common", configuration = "namedElements")) { isTransitive = false }
-    "shadowBundle"(project(path = ":integrations:mod:common", configuration = "transformProductionFabric"))
 }

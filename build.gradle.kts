@@ -15,6 +15,16 @@ allprojects {
 
     repositories {
         mavenCentral()
+        mavenLocal()
         maven("https://repo.papermc.io/repository/maven-public/")
+    }
+
+    afterEvaluate {
+        dependencies {
+            implementation("org.jetbrains.kotlin:kotlin-reflect:2.0.21")
+            implementation("org.slf4j:slf4j-api:2.1.0-alpha1")
+            implementation("org.yaml:snakeyaml:2.3")
+            implementation("org.reflections:reflections:0.10.2")
+        }
     }
 }

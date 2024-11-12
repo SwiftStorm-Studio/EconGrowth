@@ -19,11 +19,6 @@ configurations {
     val developmentNeoForge by getting {
         extendsFrom(common)
     }
-
-    val shadowBundle by creating {
-        isCanBeResolved = true
-        isCanBeConsumed = false
-    }
 }
 
 repositories {
@@ -53,5 +48,4 @@ dependencies {
     }
 
     "common"(project(path = ":integrations:mod:common", configuration = "namedElements")) { isTransitive = false }
-    "shadowBundle"(project(path = ":integrations:mod:common", configuration = "transformProductionFabric"))
 }
