@@ -1,7 +1,7 @@
 package net.rk4z.s1.swiftbase.core
 
 @Suppress("unused", "DEPRECATION")
-interface MessageKey<P : IPlayer, C> {
+interface MessageKey<P : IPlayer<C>, C> {
     fun c(): C {
         return LanguageManager.get<P, C>().textComponentFactory(this.javaClass.simpleName)
     }
@@ -20,8 +20,8 @@ interface MessageKey<P : IPlayer, C> {
         }
     }
 
-    fun <P : IPlayer, C> MessageKey<P, C>.t(player: P): C {
-        return LanguageManager.get<P, C>().getMessage(player, this)
+    fun t(player: P): C {
+        return player.getMessage(this)
     }
 }
 

@@ -73,7 +73,7 @@ class Core private constructor(
          * @throws IllegalStateException If the Core has already been initialized or if a required parameter is null.
          */
         @JvmStatic
-        fun <P : IPlayer, C> initialize(
+        fun <P : IPlayer<C>, C> initialize(
             @NotNull
             packageName: String,
             isDebug: Boolean = false,
@@ -93,8 +93,13 @@ class Core private constructor(
                 throw IllegalStateException("Core has already been initialized.")
             }
 
+            if (LanguageManager.isInitialized()) {
+                throw IllegalStateException("LanguageManager already created by SBHelper.")
+            }
+
             languageManagerInfo?.run {
                 languageManager = SBHelper.crateLanguageManager(textComponentFactory, expectedType)
+                LanguageManager.instance = this@Companion.languageManager
             }
 
             instance = Core(
@@ -121,6 +126,11 @@ class Core private constructor(
             }
 
             return instance
+        }
+
+        @JvmStatic
+        fun isLanguageManagerInitialized(): Boolean {
+            return ::languageManager.isInitialized
         }
     }
 

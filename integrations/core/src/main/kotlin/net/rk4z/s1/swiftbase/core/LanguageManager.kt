@@ -9,24 +9,53 @@ import kotlin.reflect.full.isSubclassOf
 
 @Deprecated("This class is not meant to be used directly. Use the SBHelper instead. If you using a SBHelper, you can ignore this warning.")
 @Suppress("UNCHECKED_CAST", "DEPRECATION")
-class LanguageManager<P : IPlayer, C>(
+class LanguageManager<P : IPlayer<C>, C>(
     val textComponentFactory: (String) -> C,
-    val expectedType: KClass<out MessageKey<P, C>>,
+    val expectedMKType: KClass<out MessageKey<P, C>>
 ) {
     companion object {
         internal lateinit var instance: LanguageManager<*, *>
 
-        fun <P : IPlayer, C> get(): LanguageManager<P, C> {
+        @JvmStatic
+        fun <P : IPlayer<C>, C> get(): LanguageManager<P, C> {
             return instance as LanguageManager<P, C>
+        }
+
+        @Deprecated("If you are not API developer, you have to use [get] function instead of this function.")
+        @JvmStatic
+        fun getUnsafe(): LanguageManager<*, *> {
+            return instance
+        }
+
+        @JvmStatic
+        fun isInitialized(): Boolean {
+            return this::instance.isInitialized
         }
     }
 
     val messages: MutableMap<String, MutableMap<MessageKey<P, C>, String>> = mutableMapOf()
 
+    fun findMissingKeys(lang: String): List<String> {
+        val messageKeyMap: MutableMap<String, MessageKey<P, C>> = mutableMapOf()
+        scanForMessageKeys(messageKeyMap)
+        val currentMessages = messages[lang] ?: return emptyList()
+        val missingKeys = mutableListOf<String>()
+
+        messageKeyMap.forEach { (path, key) ->
+            if (!currentMessages.containsKey(key)) {
+                missingKeys.add(path)
+                Logger.warn("Missing key: $path for language: $lang")
+            }
+        }
+
+        return missingKeys
+    }
+
     //TODO: テストする。こいつを
     fun processYamlAndMapMessageKeys(
         data: Map<String, Any>,
-        lang: String
+        // default fallback
+        lang: String = "en"
     ) {
         Logger.logIfDebug("Starting to process YAML and map message keys for language: $lang")
 
@@ -34,7 +63,7 @@ class LanguageManager<P : IPlayer, C>(
         val messageMap: MutableMap<MessageKey<P, C>, String> = mutableMapOf()
 
         // クラス構造に基づいてメッセージキーを探索
-        scanForMessageKeys(messageKeyMap, expectedType)
+        scanForMessageKeys(messageKeyMap)
         Logger.logIfDebug("MessageKey map generated with ${messageKeyMap.size} keys for language: $lang")
 
         // YAMLデータをマッピング
@@ -46,11 +75,11 @@ class LanguageManager<P : IPlayer, C>(
         Logger.logIfDebug("Message map stored for language: $lang")
     }
 
+    // Private helper functions
     private fun scanForMessageKeys(
-        messageKeyMap: MutableMap<String, MessageKey<P, C>>,
-        expectedType: KClass<out MessageKey<P, C>>
+        messageKeyMap: MutableMap<String, MessageKey<P, C>>
     ) {
-        Logger.logIfDebug("Starting scan for message keys of expected type: ${expectedType.simpleName}")
+        Logger.logIfDebug("Starting scan for message keys of expected type: ${expectedMKType.simpleName}")
 
         val reflections = Reflections(
             ConfigurationBuilder()
@@ -63,7 +92,7 @@ class LanguageManager<P : IPlayer, C>(
 
         messageKeyClasses.forEach { clazz ->
             Logger.logIfDebug("Examining class: ${clazz.kotlin.qualifiedName}")
-            mapMessageKeys(clazz.kotlin, expectedType, "", messageKeyMap)
+            mapMessageKeys(clazz.kotlin, "", messageKeyMap)
         }
 
         Logger.logIfDebug("Completed scanning for message keys; total keys mapped: ${messageKeyMap.size}")
@@ -71,27 +100,26 @@ class LanguageManager<P : IPlayer, C>(
 
     private fun mapMessageKeys(
         clazz: KClass<out MessageKey<*, *>>,
-        expectedType: KClass<out MessageKey<P, C>>,
         currentPath: String = "",
         messageKeyMap: MutableMap<String, MessageKey<P, C>>
     ) {
-        val className = if (clazz == expectedType) "" else clazz.simpleName?.lowercase() ?: return
+        val className = if (clazz == expectedMKType) "" else clazz.simpleName?.lowercase() ?: return
         val fullPath = if (currentPath.isEmpty()) className else "$currentPath.$className"
 
         Logger.logIfDebug("Mapping keys for class: ${clazz.simpleName}, fullPath: $fullPath")
 
-        if (clazz == expectedType || clazz.isSubclassOf(expectedType)) {
+        if (clazz == expectedMKType || clazz.isSubclassOf(expectedMKType)) {
             clazz.nestedClasses.forEach { nestedClass ->
-                if (nestedClass.isSubclassOf(expectedType)) {
+                if (nestedClass.isSubclassOf(expectedMKType)) {
                     Logger.logIfDebug("Found nested class of expected type: ${nestedClass.simpleName}")
-                    mapMessageKeys(nestedClass as KClass<out MessageKey<*, *>>, expectedType, fullPath, messageKeyMap)
+                    mapMessageKeys(nestedClass as KClass<out MessageKey<*, *>>, fullPath, messageKeyMap)
                 }
             }
             return
         }
 
         val objectInstance = clazz.objectInstance
-        if (expectedType.isInstance(objectInstance)) {
+        if (expectedMKType.isInstance(objectInstance)) {
             Logger.logIfDebug("Adding object instance to messageKeyMap: $fullPath -> ${clazz.simpleName}")
             messageKeyMap[fullPath] = objectInstance as MessageKey<P, C>
         } else {
@@ -99,9 +127,9 @@ class LanguageManager<P : IPlayer, C>(
         }
 
         clazz.nestedClasses.forEach { nestedClass ->
-            if (nestedClass.isSubclassOf(expectedType)) {
+            if (nestedClass.isSubclassOf(expectedMKType)) {
                 Logger.logIfDebug("Exploring nested class: ${nestedClass.simpleName} under $fullPath")
-                mapMessageKeys(nestedClass as KClass<out MessageKey<*, *>>, expectedType, fullPath, messageKeyMap)
+                mapMessageKeys(nestedClass as KClass<out MessageKey<*, *>>, fullPath, messageKeyMap)
             }
         }
     }
@@ -140,12 +168,5 @@ class LanguageManager<P : IPlayer, C>(
         }
 
         Logger.logIfDebug("Completed YAML data processing for prefix: '$prefix'")
-    }
-
-    fun <P : IPlayer> getMessage(player: P, key: MessageKey<*, *>): C {
-        require(key::class.isSubclassOf(expectedType)) { "Unexpected MessageKey type: ${key::class}. Expected: $expectedType" }
-        val lang = player.getLanguage()
-        val message = messages[lang]?.get(key) ?: key.rc()
-        return textComponentFactory(message)
     }
 }
