@@ -2,6 +2,7 @@ package net.rk4z.s1.swiftbase.core
 
 import kotlin.reflect.KClass
 
+@Suppress("DEPRECATION")
 object SBHelper {
     /**
      * Create a new LanguageManager instance.
