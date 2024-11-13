@@ -1,7 +1,6 @@
 package net.rk4z.s1.swiftbase.core
 
-import net.rk4z.s1.swiftbase.core.Core.Companion.logger
-
+@Suppress("unused", "DEPRECATION")
 interface MessageKey<P : IPlayer, C> {
     fun c(): C {
         return LanguageManager.get<P, C>().textComponentFactory(this.javaClass.simpleName)
@@ -11,13 +10,13 @@ interface MessageKey<P : IPlayer, C> {
         return this.javaClass.simpleName
     }
 
-    fun log(level: String = "INFO") {
-        val message = rc()
-        when (level.uppercase()) {
-            "INFO" -> logger.info(message)
-            "WARN" -> logger.warn(message)
-            "ERROR" -> logger.error(message)
-            else -> logger.debug(message)
+    fun log(level: LogLevel = LogLevel.INFO) {
+        val message = this.rc()
+        when (level) {
+            LogLevel.INFO -> Logger.info(message)
+            LogLevel.WARN -> Logger.warn(message)
+            LogLevel.ERROR -> Logger.error(message)
+            else -> Logger.debug(message)
         }
     }
 

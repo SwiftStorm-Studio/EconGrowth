@@ -21,6 +21,7 @@ allprojects {
 
     afterEvaluate {
         dependencies {
+            implementation("org.json:json:20240303")
             implementation("org.jetbrains.kotlin:kotlin-reflect:2.0.21")
             implementation("org.slf4j:slf4j-api:2.1.0-alpha1")
             implementation("org.yaml:snakeyaml:2.3")
