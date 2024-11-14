@@ -12,7 +12,15 @@ import kotlin.reflect.full.isSubclassOf
 
 @Suppress("DEPRECATION")
 class PaperPlayer(internal val player: Player) : IPlayer<TextComponent> {
-    private val languageManager = getLM()
+    private val languageManager: LanguageManager<PaperPlayer, TextComponent>
+        get() {
+            //この関数が呼び出される時点でLanguageManagerが初期化されていない場合はエラーを出す
+            if (!LanguageManager.isInitialized()) {
+                throw IllegalStateException("LanguageManager is not initialized but you are trying to use it.")
+            }
+            val languageManager = LanguageManager.get<PaperPlayer, TextComponent>()
+            return languageManager
+        }
 
     override fun getLanguage(): String {
         return player.locale().language ?: "en"
@@ -46,16 +54,6 @@ class PaperPlayer(internal val player: Player) : IPlayer<TextComponent> {
         require(key::class.isSubclassOf(expectedMKType)) { "Unexpected MessageKey type: ${key::class}. Expected: $expectedMKType" }
         val lang = this.getLanguage()
         return messages[lang]?.containsKey(key) ?: false
-    }
-
-
-    private fun getLM(): LanguageManager<PaperPlayer, TextComponent> {
-        //この関数が呼び出される時点でLanguageManagerが初期化されていない場合はエラーを出す
-        val languageManager = LanguageManager.get<PaperPlayer, TextComponent>()
-        if (!LanguageManager.isInitialized()) {
-            throw IllegalStateException("LanguageManager is not initialized but you are trying to use it.")
-        }
-        return languageManager
     }
 }
 

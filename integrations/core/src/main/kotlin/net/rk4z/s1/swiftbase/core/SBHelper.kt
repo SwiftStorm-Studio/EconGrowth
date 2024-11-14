@@ -2,7 +2,6 @@ package net.rk4z.s1.swiftbase.core
 
 import kotlin.reflect.KClass
 
-@Suppress("DEPRECATION")
 object SBHelper {
     /**
      * Create a new LanguageManager instance.
@@ -11,6 +10,7 @@ object SBHelper {
      * @param textComponentFactory The factory to create a new text component.
      * @param expectedType The expected type of the message key.
      * @return The created language manager.
+     * @throws IllegalStateException If the language manager is already created by [Core].
      */
     fun <P : IPlayer<C>, C> crateLanguageManager(
         textComponentFactory: (String) -> C,

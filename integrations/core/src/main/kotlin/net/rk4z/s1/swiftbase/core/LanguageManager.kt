@@ -8,9 +8,8 @@ import java.util.Locale
 import kotlin.reflect.KClass
 import kotlin.reflect.full.isSubclassOf
 
-@Deprecated("This class is not meant to be used directly. Use the SBHelper instead. If you using a SBHelper, you can ignore this warning.")
-@Suppress("UNCHECKED_CAST", "DEPRECATION")
-class LanguageManager<P : IPlayer<C>, C>(
+@Suppress("UNCHECKED_CAST")
+class LanguageManager<P : IPlayer<C>, C> internal constructor(
     val textComponentFactory: (String) -> C,
     val expectedMKType: KClass<out MessageKey<P, C>>
 ) {
@@ -84,7 +83,7 @@ class LanguageManager<P : IPlayer<C>, C>(
 
         val reflections = Reflections(
             ConfigurationBuilder()
-                .setUrls(ClasspathHelper.forPackage(Core.get().packageName))
+                .setUrls(ClasspathHelper.forPackage(Core.getInstance().packageName))
                 .setScanners(Scanners.SubTypes)
         )
 
@@ -171,7 +170,14 @@ class LanguageManager<P : IPlayer<C>, C>(
         Logger.logIfDebug("Completed YAML data processing for prefix: '$prefix'")
     }
 
-    fun getSysMessage(key: MessageKey<P, C>, vararg args: Any): String {
+    /**
+     * Get a system message from the language manager.
+     * The language will be determined by the system's default locale.
+     *
+     * @param key The message key to retrieve.
+     * @param args The arguments to format the message with.
+     */
+    fun getSysMessage(key: MessageKey<*, *>, vararg args: Any): String {
         val lang = Locale.getDefault().language
         val message = messages[lang]?.get(key)
         val text = message?.let { String.format(it, *args) } ?: return key.rc()

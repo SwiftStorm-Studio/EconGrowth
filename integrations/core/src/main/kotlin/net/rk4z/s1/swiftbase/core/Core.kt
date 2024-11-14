@@ -23,7 +23,7 @@ import kotlin.io.path.notExists
  *
  * This class contains the methods that are common to all platforms.
  */
-@Suppress("CanBeParameter", "PropertyName", "unused", "DEPRECATION")
+@Suppress("PropertyName", "unused", "DEPRECATION")
 class Core private constructor(
     @NotNull
     val packageName: String,
@@ -45,11 +45,23 @@ class Core private constructor(
     val version: String,
 ) {
     companion object {
+        /**
+         * Core is a singleton and can't be initialized twice
+         */
         internal lateinit var instance: Core
+
+        /**
+         * When using Core, an instance of LanguageManager is automatically created.
+         *
+         * If you initialize Core and then try to initialize LanguageManager from SBHelper, an error will occur (because LanguageManager is a singleton).
+         */
         internal lateinit var languageManager: LanguageManager<*, *>
 
         lateinit var helper: ResourceHelper
 
+        /**
+         * Logger will be replaced by a user-specific one after Core initialization
+         */
         var logger: Logger = LoggerFactory.getLogger("SwiftBase")
 
         /**
@@ -70,7 +82,9 @@ class Core private constructor(
          * @param version The version of the project.
          * @param languageManagerInfo The LanguageManagerInfo object. If null, the languageSystem will be disabled.
          * @return The Core instance.
+         *
          * @throws IllegalStateException If the Core has already been initialized or if a required parameter is null.
+         * @throws IllegalStateException This occurs when attempting to initialize Core even though LanguageManager is initialized by itself.
          */
         @JvmStatic
         fun <P : IPlayer<C>, C> initialize(
@@ -102,6 +116,9 @@ class Core private constructor(
                 LanguageManager.instance = this@Companion.languageManager
             }
 
+            Companion.logger = logger
+            helper = ResourceHelper(dataFolder)
+
             instance = Core(
                 packageName,
                 isDebug,
@@ -119,8 +136,14 @@ class Core private constructor(
             return instance
         }
 
+        /**
+         * Obtains an instance of Core; an error will occur if called before Core initialization.
+         *
+         * @return The Core instance.
+         * @throws IllegalStateException If the Core has not been initialized.
+         */
         @JvmStatic
-        fun get(): Core {
+        fun getInstance(): Core {
             if (!::instance.isInitialized) {
                 throw IllegalStateException("Core has not been initialized.")
             }
@@ -132,11 +155,6 @@ class Core private constructor(
         fun isLanguageManagerInitialized(): Boolean {
             return ::languageManager.isInitialized
         }
-    }
-
-    init {
-        Companion.logger = this.logger
-        helper = ResourceHelper(dataFolder)
     }
 
     val MODRINTH_API_URL = "https://api.modrinth.com/v2/project/${modrinthID}/version"
@@ -176,6 +194,8 @@ class Core private constructor(
             Short::class -> value?.toString()?.toShortOrNull() as? T
             Long::class -> value?.toString()?.toLongOrNull() as? T
             Float::class -> value?.toString()?.toFloatOrNull() as? T
+
+            // There is a special type! :D
             Byte::class -> value?.toString()?.toByteOrNull() as? T
             Char::class -> (value as? String)?.singleOrNull() as? T
             List::class -> value as? List<*> as? T
@@ -187,12 +207,28 @@ class Core private constructor(
         }
     }
 
+    /**
+     * Initializes the directories.
+     *
+     * This method should be called after Core initialization.
+     *
+     * It creates the necessary directories if they don't exist
+     */
     fun initializeDirectories() {
-        if (dataFolder.toPath().notExists()) dataFolder.mkdirs()
-        configFile?.let { createConfigIfNotExists() }
-        if (availableLang != null) initializeLanguageFiles()
+        if (dataFolder.notExists()) dataFolder.mkdirs()
+
+        if (configFile != null) {
+            createConfigIfNotExists()
+        }
+
+        if (!availableLang.isNullOrEmpty() && langDir != null) {
+            initializeLanguageFiles()
+        }
     }
 
+    /**
+     * Updates the language files if needed.
+     */
     fun updateLanguageFilesIfNeeded() {
         availableLang?.forEach { lang ->
             val langFile = File(langDir, "$lang.yml")
@@ -226,19 +262,16 @@ class Core private constructor(
         }
     }
 
+    /**
+     * Checks for updates using the Modrinth API.
+     */
     fun checkUpdate() {
         onCheckUpdate()
+        if (modrinthID.isBlank()) return
         try {
             val connection = createConnection()
             if (connection.responseCode == HttpURLConnection.HTTP_OK) {
-                val response = executor.submit { connection.inputStream.bufferedReader().readText() }.get()
-                val (latestVersion, versionCount, newerVersionCount) = extractVersionInfo(response)
-                onAllVersionsRetrieved(versionCount)
-                if (isVersionNewer(latestVersion, version)) {
-                    onNewVersionFound(latestVersion, newerVersionCount)
-                } else {
-                    onNoNewVersionFound()
-                }
+                handleUpdateResponse(connection)
             } else {
                 onUpdateCheckFailed(connection.responseCode)
             }
@@ -247,6 +280,11 @@ class Core private constructor(
         }
     }
 
+    /**
+     * Loads the language files.
+     * This function detects subclasses of platform-specific MessageKey subclasses contained within packageName
+     * and automatically maps them to YAML.
+     */
     fun loadLanguageFiles() {
         if (!availableLang.isNullOrEmpty()) {
             availableLang.forEach { lang ->
@@ -267,6 +305,7 @@ class Core private constructor(
         }
     }
 
+    // Private helper functions
     private fun createConfigIfNotExists() {
         val defaultConfigLang = Locale.getDefault().language
         val configResource = "$configResourceRoot/${defaultConfigLang}.yml"
@@ -277,10 +316,8 @@ class Core private constructor(
     }
 
     private fun initializeLanguageFiles() {
-        checkNotNull(langDir) { "Language directory (langDir) is not set, but available languages are." }
-
-        if (!langDir.exists()) langDir.mkdirs()
-        availableLang?.forEach { lang ->
+        if (!langDir!!.exists()) langDir.mkdirs()
+        availableLang!!.forEach { lang ->
             langDir.resolve("$lang.yml").apply {
                 if (this.toPath().notExists()) helper.saveResource("$langResourceRoot/$lang.yml", false, langDir)
             }
@@ -296,6 +333,17 @@ class Core private constructor(
 
     private fun createConnection(): HttpURLConnection {
         return URI(MODRINTH_API_URL).toURL().openConnection() as HttpURLConnection
+    }
+
+    private fun handleUpdateResponse(connection: HttpURLConnection) {
+        val response = executor.submit { connection.inputStream.bufferedReader().readText() }.get()
+        val (latestVersion, versionCount, newerVersionCount) = extractVersionInfo(response)
+        onAllVersionsRetrieved(versionCount)
+        if (isVersionNewer(latestVersion, version)) {
+            onNewVersionFound(latestVersion, newerVersionCount)
+        } else {
+            onNoNewVersionFound()
+        }
     }
 
     private fun extractVersionInfo(response: String): Triple<String, Int, Int> {
