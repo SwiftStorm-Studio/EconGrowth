@@ -24,18 +24,18 @@ import kotlin.io.path.notExists
  * This class contains the methods that are common to all platforms.
  */
 @Suppress("PropertyName", "unused", "DEPRECATION")
-class Core private constructor(
+class Core internal constructor(
     @NotNull
     val packageName: String,
 
     val isDebug: Boolean,
 
     val dataFolder: File,
-    val configFile: File? = null,
+    val configFile: File?,
     val configResourceRoot: String,
 
-    val availableLang: List<String>? = null,
-    val langDir: File? = null,
+    val availableLang: List<String>?,
+    val langDir: File?,
     val langResourceRoot: String,
 
     val executor: S0Executor,
@@ -93,10 +93,10 @@ class Core private constructor(
             isDebug: Boolean = false,
             dataFolder: File,
             configFile: File? = null,
-            configResourceRoot: String = "assets/config",
+            configResourceRoot: String,
             availableLang: List<String>? = null,
             langDir: File? = null,
-            langResourceRoot: String = "assets/lang",
+            langResourceRoot: String,
             executor: S0Executor,
             logger: Logger = this.logger,
             modrinthID: String = "",
@@ -137,7 +137,7 @@ class Core private constructor(
         }
 
         /**
-         * Obtains an instance of Core; an error will occur if called before Core initialization.
+         * Gets an instance of Core; an error will occur if called before Core initialization.
          *
          * @return The Core instance.
          * @throws IllegalStateException If the Core has not been initialized.
