@@ -92,10 +92,10 @@ class Core internal constructor(
             packageName: String,
             isDebug: Boolean = false,
             dataFolder: File,
-            configFile: File? = null,
+            configFile: String? = null,
             configResourceRoot: String,
             availableLang: List<String>? = null,
-            langDir: File? = null,
+            langDir: String? = null,
             langResourceRoot: String,
             executor: S0Executor,
             logger: Logger = this.logger,
@@ -119,14 +119,17 @@ class Core internal constructor(
             Companion.logger = logger
             helper = ResourceHelper(dataFolder)
 
+            val cf = configFile?.let { File(dataFolder, it) }
+            val ld = langDir?.let { File(dataFolder, it) }
+
             instance = Core(
                 packageName,
                 isDebug,
                 dataFolder,
-                configFile,
+                cf,
                 configResourceRoot,
                 availableLang,
-                langDir,
+                ld,
                 langResourceRoot,
                 executor,
                 logger,

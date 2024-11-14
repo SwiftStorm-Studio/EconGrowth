@@ -19,7 +19,7 @@ open class PluginEntry(
 
     val isDebug: Boolean = false,
 
-    val configFile: File? = null,
+    val configFile: String? = null,
     val configResourceRoot: String = "assets/config",
 
     val languageManagerInfo: LanguageManagerInfo<PaperPlayer, TextComponent>? = LanguageManagerInfo<PaperPlayer, TextComponent>(
@@ -27,7 +27,7 @@ open class PluginEntry(
         expectedType = PaperMessageKey::class,
     ),
     val availableLang: List<String>? = null,
-    val langDir: File? = null,
+    val langDir: String? = null,
     val langResourceRoot: String = "assets/lang",
 
     val logger: Logger,
