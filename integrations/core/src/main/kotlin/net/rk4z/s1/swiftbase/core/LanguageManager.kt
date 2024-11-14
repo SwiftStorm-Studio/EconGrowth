@@ -4,6 +4,7 @@ import org.reflections.Reflections
 import org.reflections.scanners.Scanners
 import org.reflections.util.ClasspathHelper
 import org.reflections.util.ConfigurationBuilder
+import java.util.Locale
 import kotlin.reflect.KClass
 import kotlin.reflect.full.isSubclassOf
 
@@ -168,5 +169,12 @@ class LanguageManager<P : IPlayer<C>, C>(
         }
 
         Logger.logIfDebug("Completed YAML data processing for prefix: '$prefix'")
+    }
+
+    fun getSysMessage(key: MessageKey<P, C>, vararg args: Any): String {
+        val lang = Locale.getDefault().language
+        val message = messages[lang]?.get(key)
+        val text = message?.let { String.format(it, *args) } ?: return key.rc()
+        return text
     }
 }
