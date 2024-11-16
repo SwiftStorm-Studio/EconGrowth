@@ -4,6 +4,19 @@ package net.rk4z.s1.econgrowth.paper.utils
 
 import net.rk4z.s1.swiftbase.paper.PaperMessageKey
 
+open class Main : PaperMessageKey {
+    open class Specializations : Main() {
+        open class Miner : Specializations() {
+            object NAME : Miner()
+            open class Description : Miner() {
+                object ITEM_0 : Description()
+                object ITEM_1 : Description()
+                object ITEM_2 : Description()
+            }
+        }
+    }
+}
+
 open class System : PaperMessageKey {
     open class Log : System() {
         object LOADING : Log()

@@ -1,5 +1,16 @@
 langVersion: 1.0
 
+main:
+  specializations:
+    miner:
+      name: "鉱夫"
+      description:
+        # 配列型は、上から0,1,2と番号が割り振られ、それぞれitem_0, item_1, item_2となります。
+        # クラス側は、main.specializations.miner.description.ITEM_0...としてアクセスします。
+        - "採掘好きな彼らは、洞窟を掘りすぎて家族から『どこにいるの？』と聞かれる。"
+        - "採掘好きな彼らは、ツルハシを振るう速度なら他の職業に勝るとも劣らないが、たまに掘りすぎて拠点を忘れる。"
+        - "採掘好きな彼らは、地底での時間が長すぎて、地上に戻ると太陽が敵だと思っている。"
+
 system:
   log:
     loading: "%s v%s をロード中..."

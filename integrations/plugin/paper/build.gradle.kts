@@ -12,7 +12,7 @@ dependencies {
     compileOnly(libs.paper.api)
 
     implementation("net.rk4z:igf:1.0.1")
-    //implementation(libs.swiftbase.paper)
+    implementation(libs.swiftbase.paper)
 }
 
 tasks.named<Jar>("jar") {

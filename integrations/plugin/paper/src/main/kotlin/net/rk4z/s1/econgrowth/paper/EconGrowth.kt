@@ -1,9 +1,7 @@
 package net.rk4z.s1.econgrowth.paper
 
-
 import net.rk4z.s1.swiftbase.paper.PluginEntry
 import org.slf4j.LoggerFactory
-
 
 class EconGrowth : PluginEntry(
     id = "econgrowth",
@@ -16,7 +14,17 @@ class EconGrowth : PluginEntry(
     modrinthID = "z5vRAQMP",
     serviceId = 23781
 ) {
-    init {
+    companion object {
+        lateinit var dataBase: DataBase
+            private set
+
+        fun get(): EconGrowth? {
+            return get<EconGrowth>()
+        }
+    }
+
+    override fun onLoadPre() {
 
     }
+
 }
