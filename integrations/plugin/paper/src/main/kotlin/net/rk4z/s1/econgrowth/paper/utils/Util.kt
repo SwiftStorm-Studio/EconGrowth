@@ -1,3 +1,5 @@
+@file:Suppress("unused")
+
 package net.rk4z.s1.econgrowth.paper.utils
 
 import net.minecraft.server.level.ServerPlayer
