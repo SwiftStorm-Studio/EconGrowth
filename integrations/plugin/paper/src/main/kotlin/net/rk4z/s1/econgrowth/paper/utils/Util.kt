@@ -1,10 +1,8 @@
 package net.rk4z.s1.econgrowth.paper.utils
 
 import net.minecraft.server.level.ServerPlayer
-import net.minecraft.world.level.block.Block
 import org.bukkit.Material
 import org.bukkit.craftbukkit.entity.CraftPlayer
-import org.bukkit.craftbukkit.util.CraftMagicNumbers
 import org.bukkit.entity.Entity
 import org.bukkit.entity.Player
 import java.time.LocalDateTime
@@ -83,8 +81,7 @@ fun ServerPlayer.toPaperPlayer(): CraftPlayer {
 }
 
 fun Material.getBlockHardness(): Float {
-    val nmsBlock: Block = CraftMagicNumbers.getBlock(this)
-    return nmsBlock.defaultBlockState().destroySpeed
+    return this.hardness
 }
 
 fun Material.isDeepSlate(): Boolean {

@@ -1,13 +1,21 @@
 package net.rk4z.s1.econgrowth.paper
 
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.transactions.transaction
+import net.rk4z.s1.swiftbase.core.CB
 import net.rk4z.s1.swiftbase.core.Logger
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.Table
-import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.sql.deleteWhere
+import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.sql.update
 import java.io.File
 import java.sql.DriverManager
 
+@Suppress("SqlSourceToSinkFlow", "SqlNoDataSourceInspection", "ExposedReference", "unused")
 class DataBase(private val plugin: EconGrowth) {
     private var memoryDb: Database? = null
 
@@ -42,75 +50,165 @@ class DataBase(private val plugin: EconGrowth) {
     }
 
     private fun initializeFileDatabase(filePath: String) {
-        try {
-            // URL構築 & ファイルDBの起動
-            val fileDb = Database.connect("jdbc:sqlite:$filePath", driver = "org.sqlite.JDBC")
+        CB.executor.execute {
+            try {
+                // URL構築 & ファイルDBの起動
+                val fileDb = Database.connect("jdbc:sqlite:$filePath", driver = "org.sqlite.JDBC")
 
-            // 必要なテーブルを作成
-            transaction(fileDb) {
-                SchemaUtils.create(
-                    Players,
-                    PlacedBlockByPlayer
-                )
-                Logger.info("Initialized new database with required tables.")
+                // 必要なテーブルを作成
+                transaction(fileDb) {
+                    SchemaUtils.create(
+                        Players,
+                        PlacedBlockByPlayer
+                    )
+                    Logger.info("Initialized new database with required tables.")
+                }
+            } catch (e: Exception) {
+                Logger.error("Failed to initialize the file database!")
+                e.printStackTrace()
+                throw e
             }
-        } catch (e: Exception) {
-            Logger.error("Failed to initialize the file database!")
-            e.printStackTrace()
-            throw e
         }
     }
 
     fun syncToFile() {
-        try {
-            val filePath = "${plugin.dataFolder.absolutePath}/database.db"
-            val memoryUrl = "jdbc:sqlite::memory:"
+        CB.executor.executeAsync {
+            try {
+                val filePath = "${plugin.dataFolder.absolutePath}/database.db"
+                val memoryUrl = "jdbc:sqlite::memory:"
 
-            // インメモリDBの内容をファイルDBに書き込む
-            // インメモリは名前の通りプログラム終了時に消失するため、ファイルに書き込む必要がある
-            DriverManager.getConnection(memoryUrl).use { memoryConnection ->
-                DriverManager.getConnection("jdbc:sqlite:$filePath").use { fileConnection ->
-                    // VACUUM INTOでインメモリDBの内容をファイルDBに書き込む
-                    memoryConnection.prepareStatement("VACUUM INTO '$filePath'").execute()
+                // インメモリDBの内容をファイルDBに書き込む
+                // インメモリは名前の通りプログラム終了時に消失するため、ファイルに書き込む必要がある
+                DriverManager.getConnection(memoryUrl).use { memoryConnection ->
+                    DriverManager.getConnection("jdbc:sqlite:$filePath").use { fileConnection ->
+                        // VACUUM INTOでインメモリDBの内容をファイルDBに書き込む
+                        memoryConnection.prepareStatement("VACUUM INTO '$filePath'").execute()
+                    }
                 }
-            }
 
-            Logger.info("In-memory database synchronized to file successfully!")
-        } catch (e: Exception) {
-            Logger.error("Failed to synchronize in-memory database to file!")
-            e.printStackTrace()
+                Logger.info("In-memory database synchronized to file successfully!")
+            } catch (e: Exception) {
+                Logger.error("Failed to synchronize in-memory database to file!")
+                e.printStackTrace()
+            }
         }
     }
+
+//>========================= [Functions] ====================<\\
+
+    //region Players
+    fun insertNewPlayer(uuid: String) {
+        DBTaskQueue {
+            transaction(memoryDb!!) {
+                Players.insert {
+                    it[Players.uuid] = uuid
+                    it[xp] = 0.0f
+                    it[level] = 1
+                    it[balance] = 0.0
+                    it[lastLogin] = System.currentTimeMillis()
+                }
+            }
+        }
+    }
+
+    fun updateLastLogin(uuid: String, lastLogin: Long) {
+        DBTaskQueue {
+            transaction(memoryDb!!) {
+                Players.update({ Players.uuid eq uuid }) {
+                    it[Players.lastLogin] = lastLogin
+                }
+            }
+        }
+    }
+
+    fun updateXp(uuid: String, xp: Float) {
+        DBTaskQueue {
+            transaction(memoryDb!!) {
+                Players.update({ Players.uuid eq uuid }) {
+                    it[Players.xp] = xp
+                }
+            }
+        }
+    }
+
+    fun updateLevel(uuid: String, level: Int) {
+        DBTaskQueue {
+            transaction(memoryDb!!) {
+                Players.update({ Players.uuid eq uuid }) {
+                    it[Players.level] = level
+                }
+            }
+        }
+    }
+
+    fun updateBalance(uuid: String, balance: Double) {
+        DBTaskQueue {
+            transaction(memoryDb!!) {
+                Players.update({ Players.uuid eq uuid }) {
+                    it[Players.balance] = balance
+                }
+            }
+        }
+    }
+    //endregion
+
+    //region PlacedBlockByPlayer
+    fun insertNewBlock(x: Int, y: Int, z: Int, material: String, dim: String) {
+        DBTaskQueue {
+            transaction(memoryDb!!) {
+                PlacedBlockByPlayer.insert {
+                    it[PlacedBlockByPlayer.x] = x
+                    it[PlacedBlockByPlayer.y] = y
+                    it[PlacedBlockByPlayer.z] = z
+                    it[PlacedBlockByPlayer.material] = material
+                    it[PlacedBlockByPlayer.dim] = dim
+                }
+            }
+        }
+    }
+
+    fun isPlayerPlacedBlock(x: Int, y: Int, z: Int, dim: String): Boolean {
+        return DBTaskQueue {
+            transaction(memoryDb!!) {
+                PlacedBlockByPlayer
+                    .selectAll()
+                    .where {
+                        (PlacedBlockByPlayer.x eq x) and
+                                (PlacedBlockByPlayer.y eq y) and
+                                (PlacedBlockByPlayer.z eq z) and
+                                (PlacedBlockByPlayer.dim eq dim)
+                    }
+                    .limit(1)
+                    .any()
+            }
+        }
+    }
+
+    fun deleteBlockFromPlacedBlock(x: Int, y: Int, z: Int, dim: String) {
+        DBTaskQueue {
+            transaction(memoryDb!!) {
+                PlacedBlockByPlayer.deleteWhere {
+                    (PlacedBlockByPlayer.x eq x) and
+                            (PlacedBlockByPlayer.y eq y) and
+                            (PlacedBlockByPlayer.z eq z) and
+                            (PlacedBlockByPlayer.dim eq dim)
+                }
+            }
+        }
+    }
+    //endregion
+
+//>================================================================<\\
 
     object Players : Table() {
         // 基本情報
         val uuid = varchar("uuid", 22) // プレイヤーのUUID（ShortUUID形式）
+        val xp = float("xp") // プレイヤーの総経験値
         val level = integer("level") // プレイヤーのレベル
         val balance = double("balance") // プレイヤーの残高
-        val lastLogin = long("last_login") // 最終ログイン日時（タイムスタンプ形式）
+        val lastLogin = long("last_login") // 最終ログイン日時。正確にはログアウト時に記録される（タイムスタンプ形式)
 
-        // 職業情報
-        val specializations = varchar("specializations", 255) // 専門職（カンマ区切りで最大3つ）
-        val eliteSpecialization = varchar("elite_specialization", 50).nullable() // 極職（null許容）
-
-        // ギルド情報
-        val guild = varchar("guild", 50).nullable() // 所属ギルド（null許容）
-
-        // スキル情報
-        val unlockedSkills = text("unlocked_skills").nullable() // 解放済みスキル（JSON文字列で格納）
-
-        // ランキング情報
-        val serverRank = integer("server_rank").nullable() // サーバー内順位（null許容）
-
-        // フレンド情報
-        val friends = text("friends").nullable() // 登録済みフレンド（UUIDのリストをJSON形式で格納）
-
-        // 名誉/称号情報
-        val titles = text("titles").nullable() // 獲得済みの名誉や称号（JSON形式）
-
-        // ステータス情報
-        val buffs = text("buffs").nullable() // バフ情報（JSON形式）
-        val debuffs = text("debuffs").nullable() // デバフ情報（JSON形式）
+        //TODO: まだまだあるよ！
     }
 
     object PlacedBlockByPlayer : Table() {
@@ -119,6 +217,5 @@ class DataBase(private val plugin: EconGrowth) {
         val z = integer("z")
         val material = varchar("material", 255)
         val dim = varchar("dim", 255)
-        val chunk = varchar("chunk", 255)
     }
 }

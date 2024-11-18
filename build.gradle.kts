@@ -31,7 +31,6 @@ allprojects {
             implementation("org.jetbrains.exposed:exposed-kotlin-datetime:$exposedVersion")
             implementation("org.jetbrains.exposed:exposed-json:$exposedVersion")
             implementation("org.jetbrains.exposed:exposed-money:$exposedVersion")
-            implementation("org.jetbrains.exposed:exposed-spring-boot-starter:$exposedVersion")
             implementation("org.xerial:sqlite-jdbc:3.47.0.0")
         }
     }

@@ -1,7 +1,9 @@
 package net.rk4z.s1.econgrowth.paper
 
+import net.rk4z.s1.swiftbase.core.CB
 import net.rk4z.s1.swiftbase.paper.PluginEntry
 import org.slf4j.LoggerFactory
+import java.util.concurrent.TimeUnit
 
 class EconGrowth : PluginEntry(
     id = "econgrowth",
@@ -24,7 +26,10 @@ class EconGrowth : PluginEntry(
     }
 
     override fun onLoadPre() {
-
+        dataBase = DataBase(this)
+        CB.executor.scheduleAtFixedRate({
+            dataBase.syncToFile()
+        }, 0, 10)
     }
 
 }

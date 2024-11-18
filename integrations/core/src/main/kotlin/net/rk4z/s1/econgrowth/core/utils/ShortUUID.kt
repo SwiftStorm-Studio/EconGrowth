@@ -1,8 +1,7 @@
 package net.rk4z.s1.econgrowth.core.utils
 
-import java.util.*
 import java.nio.ByteBuffer
-import java.util.Base64
+import java.util.*
 
 /**
  * A utility class for handling UUIDs and their shorter string representations.

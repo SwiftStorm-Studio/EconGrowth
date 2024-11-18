@@ -36,8 +36,8 @@ paperApi = "1.21.3-R0.1-SNAPSHOT"
 [libraries]
 minecraft = { module = "net.minecraft:minecraft", version.ref = "minecraft" }
 
-swiftbase-core = { module = "net.rk4z.s1:swiftbase-core", version = "2.0.1" }
-swiftbase-paper = { module = "net.rk4z.s1:swiftbase-paper", version = "2.0.0" }
+swiftbase-core = { module = "net.rk4z.s1:swiftbase-core", version = "2.0.3" }
+swiftbase-paper = { module = "net.rk4z.s1:swiftbase-paper", version = "2.0.6" }
 swiftbase-fabric = { module = "net.rk4z.s1:swiftbase-fabric", version = "2.0.0" }
 
 

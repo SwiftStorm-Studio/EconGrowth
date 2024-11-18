@@ -2,9 +2,11 @@ package net.rk4z.s1.econgrowth.paper
 
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
+import org.bukkit.event.block.BlockBreakEvent
+import org.bukkit.event.block.BlockPlaceEvent
 import org.bukkit.event.player.PlayerQuitEvent
 
-@Suppress("DuplicatedCode")
+@Suppress("unused")
 class EconGrowthEventListener : Listener {
     val dataBase = EconGrowth.dataBase
 
@@ -12,5 +14,32 @@ class EconGrowthEventListener : Listener {
     fun onPlayerQuit(event: PlayerQuitEvent) {
         val player = event.player
 
+    }
+
+    @EventHandler
+    fun onPlayerPlaceBlock(event: BlockPlaceEvent) {
+        val player = event.player
+        val block = event.block
+        val material = block.type.toString().lowercase()
+        val x = block.x
+        val y = block.y
+        val z = block.z
+        val dim = player.world.environment.toString().lowercase()
+
+        dataBase.insertNewBlock(x, y, z, material, dim)
+    }
+
+    @EventHandler
+    fun onPlayerBreakBlock(event: BlockBreakEvent) {
+        val block = event.block
+        val x = block.x
+        val y = block.y
+        val z = block.z
+        var isPlacedBlock = false
+
+        if (dataBase.isPlayerPlacedBlock(x, y, z, block.world.environment.toString().lowercase())) {
+            dataBase.deleteBlockFromPlacedBlock(x, y, z, block.world.environment.toString().lowercase())
+            isPlacedBlock = true
+        }
     }
 }

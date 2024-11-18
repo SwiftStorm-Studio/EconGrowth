@@ -9,6 +9,7 @@ import net.rk4z.s1.swiftbase.paper.PaperPlayer
 import kotlin.reflect.KClass
 import kotlin.reflect.full.isSubclassOf
 
+@Suppress("unused", "CanBeParameter")
 abstract class Specializations(
     private val name: PaperMessageKey,
     private val description: PaperMessageKey,
@@ -38,7 +39,7 @@ abstract class Specializations(
         if (selfInstance != null) {
             Logger.logIfDebug("Found a single object instance for ${descriptionClass.simpleName}")
             return listOf(selfInstance) // オブジェクトインスタンスがあれば、それだけを返す
-                                        // これは、Descが一個のみの場合に機能する。
+            // これは、Descが一個のみの場合に機能する。
         }
 
         // ネストされたクラスを検索
