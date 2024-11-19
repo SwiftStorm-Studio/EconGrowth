@@ -13,8 +13,6 @@ allprojects {
     group = "net.rk4z.s1"
     version = "1.0.0"
 
-    val exposedVersion: String by project
-
     repositories {
         mavenCentral()
         mavenLocal()
@@ -23,15 +21,15 @@ allprojects {
 
     afterEvaluate {
         dependencies {
-            implementation(libs.swiftbase.core)
-            implementation("org.jetbrains.exposed:exposed-core:$exposedVersion")
-            implementation("org.jetbrains.exposed:exposed-crypt:$exposedVersion")
-            implementation("org.jetbrains.exposed:exposed-dao:$exposedVersion")
-            implementation("org.jetbrains.exposed:exposed-jdbc:$exposedVersion")
-            implementation("org.jetbrains.exposed:exposed-kotlin-datetime:$exposedVersion")
-            implementation("org.jetbrains.exposed:exposed-json:$exposedVersion")
-            implementation("org.jetbrains.exposed:exposed-money:$exposedVersion")
-            implementation("org.xerial:sqlite-jdbc:3.47.0.0")
+            libs.apply {
+                implementation(kotlin.stdlib)
+                implementation(exposed.core)
+                implementation(exposed.jdbc)
+                implementation(exposed.dao)
+                implementation(exposed.json)
+                implementation(exposed.kotlin.datetime)
+                implementation(swiftbase.core)
+            }
         }
     }
 }

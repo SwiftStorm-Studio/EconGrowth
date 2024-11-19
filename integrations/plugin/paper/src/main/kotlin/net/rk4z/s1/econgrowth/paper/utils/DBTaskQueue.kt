@@ -1,4 +1,4 @@
-package net.rk4z.s1.econgrowth.paper
+package net.rk4z.s1.econgrowth.paper.utils
 
 import java.util.concurrent.Callable
 import java.util.concurrent.Executors

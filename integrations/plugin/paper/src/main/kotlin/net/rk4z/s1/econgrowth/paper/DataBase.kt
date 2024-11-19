@@ -1,5 +1,6 @@
 package net.rk4z.s1.econgrowth.paper
 
+import net.rk4z.s1.econgrowth.paper.utils.DBTaskQueue
 import net.rk4z.s1.swiftbase.core.CB
 import net.rk4z.s1.swiftbase.core.Logger
 import org.jetbrains.exposed.sql.*
