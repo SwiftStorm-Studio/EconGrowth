@@ -2,6 +2,7 @@ package net.rk4z.s1.econgrowth.paper
 
 import net.rk4z.s1.econgrowth.core.utils.toShortUUID
 import net.rk4z.s1.econgrowth.paper.utils.Country
+import net.rk4z.s1.econgrowth.paper.utils.XPManager
 import net.rk4z.s1.econgrowth.paper.utils.getTimeByCountry
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
@@ -47,5 +48,9 @@ class EconGrowthEventListener : Listener {
             dataBase.deleteBlockFromPlacedBlock(x, y, z, block.world.environment.toString().lowercase())
             isPlacedBlock = true
         }
+
+        event.player.sendMessage("BlockHardness: ${block.type.hardness}")
+
+        //val xp = XPManager.calculateXP(event.player.uniqueId, isPlacedBlock, event)
     }
 }

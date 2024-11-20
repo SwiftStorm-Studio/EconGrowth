@@ -3,6 +3,7 @@
 package net.rk4z.s1.econgrowth.paper.utils
 
 import net.minecraft.server.level.ServerPlayer
+import net.minecraft.world.level.ClipContext.Block
 import org.bukkit.Material
 import org.bukkit.craftbukkit.entity.CraftPlayer
 import org.bukkit.entity.Entity
@@ -80,10 +81,6 @@ fun Player.toNMSPlayer(): ServerPlayer? {
 
 fun ServerPlayer.toPaperPlayer(): CraftPlayer {
     return this.bukkitEntity
-}
-
-fun Material.getBlockHardness(): Float {
-    return this.hardness
 }
 
 fun Material.isDeepSlate(): Boolean {

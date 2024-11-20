@@ -108,12 +108,44 @@ class EGDB(private val plugin: EconGrowth) {
         }
     }
 
-    fun updateXp(uuid: String, xp: Float) {
+    fun updateXp(uuid: String, operationWithValue: String) {
         DBTaskQueue {
             transaction(memoryDb!!) {
-                Players.update({ Players.uuid eq uuid }) {
-                    it[Players.xp] = xp
+                val currentXp = Players
+                    .selectAll()
+                    .where { Players.uuid eq uuid }
+                    .singleOrNull()?.get(Players.xp) ?: 0f
+
+                val regex = """([+\-*/])([0-9.]+)""".toRegex()
+                val match = regex.matchEntire(operationWithValue)
+                    ?: throw IllegalArgumentException("Invalid format: $operationWithValue")
+
+                val operator = match.groupValues[1]
+                val value = match.groupValues[2].toFloat()
+
+                val newXp = when (operator) {
+                    "+" -> currentXp + value
+                    "-" -> currentXp - value
+                    "*" -> currentXp * value
+                    "/" -> if (value != 0f) currentXp / value else currentXp // 0での除算を防ぐ
+                    else -> throw IllegalArgumentException("Unsupported operator: $operator")
                 }
+
+                // データベースを更新
+                Players.update({ Players.uuid eq uuid }) {
+                    it[xp] = newXp
+                }
+            }
+        }
+    }
+
+    fun getLevel(uuid: String): Int {
+        return DBTaskQueue {
+            transaction(memoryDb!!) {
+                Players
+                    .selectAll()
+                    .where { Players.uuid eq uuid }
+                    .singleOrNull()?.get(Players.level) ?: 0
             }
         }
     }
