@@ -1,5 +1,8 @@
 package net.rk4z.s1.econgrowth.paper
 
+import net.rk4z.s1.econgrowth.core.utils.toShortUUID
+import net.rk4z.s1.econgrowth.paper.utils.Country
+import net.rk4z.s1.econgrowth.paper.utils.getTimeByCountry
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.block.BlockBreakEvent
@@ -8,12 +11,15 @@ import org.bukkit.event.player.PlayerQuitEvent
 
 @Suppress("unused")
 class EconGrowthEventListener : Listener {
-    val dataBase = EconGrowth.dataBase
+    val dataBase = EconGrowth.EGDB
 
     @EventHandler
     fun onPlayerQuit(event: PlayerQuitEvent) {
         val player = event.player
+        val uuid = player.uniqueId.toShortUUID().toShortString()
 
+
+        dataBase.updateLastLogin(uuid, getTimeByCountry(Country.UTC))
     }
 
     @EventHandler

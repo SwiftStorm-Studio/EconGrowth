@@ -16,7 +16,7 @@ class EconGrowth : PluginEntry(
     serviceId = 23781
 ) {
     companion object {
-        lateinit var dataBase: DataBase
+        lateinit var EGDB: EGDB
             private set
 
         fun get(): EconGrowth? {
@@ -25,9 +25,9 @@ class EconGrowth : PluginEntry(
     }
 
     override fun onLoadPre() {
-        dataBase = DataBase(this)
-        CB.executor.scheduleAtFixedRate({
-            dataBase.syncToFile()
+        EGDB = EGDB(this)
+        CB.executor.executeAsyncTimer({
+            EGDB.syncToFile()
         }, 0, 10)
     }
 

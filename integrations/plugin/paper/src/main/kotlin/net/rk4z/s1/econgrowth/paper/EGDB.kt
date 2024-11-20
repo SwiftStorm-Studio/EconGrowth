@@ -1,8 +1,10 @@
 package net.rk4z.s1.econgrowth.paper
 
 import net.rk4z.s1.econgrowth.paper.utils.DBTaskQueue
+import net.rk4z.s1.econgrowth.paper.utils.getTimeByCountry
 import net.rk4z.s1.swiftbase.core.CB
 import net.rk4z.s1.swiftbase.core.Logger
+import net.rk4z.s1.swiftbase.core.logIfDebug
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -10,7 +12,7 @@ import java.io.File
 import java.sql.DriverManager
 
 @Suppress("SqlSourceToSinkFlow", "SqlNoDataSourceInspection", "ExposedReference", "unused")
-class DataBase(private val plugin: EconGrowth) {
+class EGDB(private val plugin: EconGrowth) {
     private var memoryDb: Database? = null
 
     fun connectToDatabase(): Boolean {
@@ -21,13 +23,25 @@ class DataBase(private val plugin: EconGrowth) {
             val file = File(filePath)
 
             if (!file.exists()) {
-                initializeFileDatabase(filePath)
+                Logger.logIfDebug("Database file not found. Initializing a new file database.")
+                Database.connect("jdbc:sqlite:$filePath", driver = "org.sqlite.JDBC").also { db ->
+                    transaction(db) {
+                        SchemaUtils.create(
+                            Players,
+                            PlacedBlockByPlayer
+                        )
+                        Logger.info("Initialized new database with required tables.")
+                    }
+                }
+            } else {
+                Logger.info("File database found. Connecting...")
+                Database.connect("jdbc:sqlite:$filePath", driver = "org.sqlite.JDBC")
             }
 
-            // インメモリDBの起動（効率向上のためファイルDBから読み込む）
+            // インメモリDBの起動
             memoryDb = Database.connect(memoryUrl, driver = "org.sqlite.JDBC")
 
-            // VACUUM INTOを利用して、ファイルDBのデータをインメモリDBにコピー
+            // ファイルDBのデータをインメモリDBに移行
             DriverManager.getConnection(memoryUrl).use { memoryConnection ->
                 DriverManager.getConnection("jdbc:sqlite:$filePath").use { fileConnection ->
                     fileConnection.prepareStatement("VACUUM INTO ':memory:'").execute()
@@ -43,27 +57,6 @@ class DataBase(private val plugin: EconGrowth) {
         }
     }
 
-    private fun initializeFileDatabase(filePath: String) {
-        CB.executor.execute {
-            try {
-                // URL構築 & ファイルDBの起動
-                val fileDb = Database.connect("jdbc:sqlite:$filePath", driver = "org.sqlite.JDBC")
-
-                // 必要なテーブルを作成
-                transaction(fileDb) {
-                    SchemaUtils.create(
-                        Players,
-                        PlacedBlockByPlayer
-                    )
-                    Logger.info("Initialized new database with required tables.")
-                }
-            } catch (e: Exception) {
-                Logger.error("Failed to initialize the file database!")
-                e.printStackTrace()
-                throw e
-            }
-        }
-    }
 
     fun syncToFile() {
         CB.executor.executeAsync {
@@ -99,13 +92,13 @@ class DataBase(private val plugin: EconGrowth) {
                     it[xp] = 0.0f
                     it[level] = 1
                     it[balance] = 0.0
-                    it[lastLogin] = System.currentTimeMillis()
+                    it[lastLogin] = getTimeByCountry()
                 }
             }
         }
     }
 
-    fun updateLastLogin(uuid: String, lastLogin: Long) {
+    fun updateLastLogin(uuid: String, lastLogin: String) {
         DBTaskQueue {
             transaction(memoryDb!!) {
                 Players.update({ Players.uuid eq uuid }) {
@@ -200,7 +193,7 @@ class DataBase(private val plugin: EconGrowth) {
         val xp = float("xp") // プレイヤーの総経験値
         val level = integer("level") // プレイヤーのレベル
         val balance = double("balance") // プレイヤーの残高
-        val lastLogin = long("last_login") // 最終ログイン日時。正確にはログアウト時に記録される（タイムスタンプ形式)
+        val lastLogin = text("last_login") // 最終ログイン日時。正確にはログアウト時に記録される
 
         //TODO: まだまだあるよ！
     }

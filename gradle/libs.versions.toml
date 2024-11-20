@@ -50,8 +50,8 @@ exposed-json = { module = "org.jetbrains.exposed:exposed-json", version.ref = "e
 exposed-kotlin-datetime = { module = "org.jetbrains.exposed:exposed-kotlin-datetime", version.ref = "exposed" }
 # > ------ < #
 
-swiftbase-core = { module = "net.rk4z.s1:swiftbase-core", version = "2.0.3" }
-swiftbase-paper = { module = "net.rk4z.s1:swiftbase-paper", version = "2.0.6" }
+swiftbase-core = { module = "net.rk4z.s1:swiftbase-core", version = "2.0.4" }
+swiftbase-paper = { module = "net.rk4z.s1:swiftbase-paper", version = "2.0.8" }
 swiftbase-fabric = { module = "net.rk4z.s1:swiftbase-fabric", version = "2.0.0" }
 
 
