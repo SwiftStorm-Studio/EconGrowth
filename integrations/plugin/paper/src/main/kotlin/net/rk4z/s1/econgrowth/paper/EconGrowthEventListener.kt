@@ -2,7 +2,6 @@ package net.rk4z.s1.econgrowth.paper
 
 import net.rk4z.s1.econgrowth.core.utils.toShortUUID
 import net.rk4z.s1.econgrowth.paper.utils.Country
-import net.rk4z.s1.econgrowth.paper.utils.XPManager
 import net.rk4z.s1.econgrowth.paper.utils.getTimeByCountry
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener

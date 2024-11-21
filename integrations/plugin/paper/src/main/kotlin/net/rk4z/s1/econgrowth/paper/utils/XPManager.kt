@@ -2,7 +2,7 @@ package net.rk4z.s1.econgrowth.paper.utils
 
 import net.rk4z.s1.econgrowth.paper.EconGrowth
 import org.bukkit.event.block.BlockBreakEvent
-import java.util.UUID
+import java.util.*
 
 object XPManager {
     fun calculateXP(
@@ -31,6 +31,7 @@ object XPManager {
                     0.0f
                 }
             }
+
             else -> {
                 return 0.0f
             }

@@ -1,5 +1,6 @@
 package net.rk4z.s1.econgrowth.paper
 
+import net.rk4z.beacon.EventBus
 import net.rk4z.s1.swiftbase.core.CB
 import net.rk4z.s1.swiftbase.paper.PluginEntry
 import org.slf4j.LoggerFactory
@@ -24,11 +25,20 @@ class EconGrowth : PluginEntry(
         }
     }
 
+    var backupMaxSize = 20
+
     override fun onLoadPre() {
         EGDB = EGDB(this)
-        CB.executor.executeAsyncTimer({
-            EGDB.syncToFile()
-        }, 0, 10)
+        EventBus.initialize("net.rk4z.s1.econgrowth")
     }
 
+    override fun onLoadPost() {
+        lc<Int>("backup_max_size")?.let {
+            backupMaxSize = it
+        }
+    }
+
+    override fun onDisablePre() {
+        EGDB.backupDatabase()
+    }
 }

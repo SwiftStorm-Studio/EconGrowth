@@ -1,19 +1,28 @@
 package net.rk4z.s1.econgrowth.paper
 
+import net.rk4z.beacon.IEventHandler
+import net.rk4z.beacon.handler
+import net.rk4z.s1.econgrowth.paper.events.DatabaseChangeEvent
+import net.rk4z.s1.econgrowth.paper.utils.ChangeInfo
 import net.rk4z.s1.econgrowth.paper.utils.DBTaskQueue
+import net.rk4z.s1.econgrowth.paper.utils.castValue
 import net.rk4z.s1.econgrowth.paper.utils.getTimeByCountry
-import net.rk4z.s1.swiftbase.core.CB
 import net.rk4z.s1.swiftbase.core.Logger
 import net.rk4z.s1.swiftbase.core.logIfDebug
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.io.File
+import java.io.FileInputStream
+import java.io.FileOutputStream
 import java.sql.DriverManager
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
 
-@Suppress("SqlSourceToSinkFlow", "SqlNoDataSourceInspection", "ExposedReference", "unused")
-class EGDB(private val plugin: EconGrowth) {
+@Suppress("SqlNoDataSourceInspection", "ExposedReference", "unused")
+class EGDB(private val plugin: EconGrowth) : IEventHandler {
     private var memoryDb: Database? = null
+    private var connection: Database? = null
 
     fun connectToDatabase(): Boolean {
         val filePath = "${plugin.dataFolder.absolutePath}/database.db"
@@ -24,7 +33,7 @@ class EGDB(private val plugin: EconGrowth) {
 
             if (!file.exists()) {
                 Logger.logIfDebug("Database file not found. Initializing a new file database.")
-                Database.connect("jdbc:sqlite:$filePath", driver = "org.sqlite.JDBC").also { db ->
+                connection = Database.connect("jdbc:sqlite:$filePath", driver = "org.sqlite.JDBC").also { db ->
                     transaction(db) {
                         SchemaUtils.create(
                             Players,
@@ -35,7 +44,7 @@ class EGDB(private val plugin: EconGrowth) {
                 }
             } else {
                 Logger.info("File database found. Connecting...")
-                Database.connect("jdbc:sqlite:$filePath", driver = "org.sqlite.JDBC")
+                connection = Database.connect("jdbc:sqlite:$filePath", driver = "org.sqlite.JDBC")
             }
 
             // インメモリDBの起動
@@ -57,26 +66,44 @@ class EGDB(private val plugin: EconGrowth) {
         }
     }
 
+    fun backupDatabase() {
+        try {
+            val backupDir = File("${plugin.dataFolder.absolutePath}/dataBackup")
+            if (!backupDir.exists()) backupDir.mkdirs()
 
-    fun syncToFile() {
-        CB.executor.executeAsync {
-            try {
-                val filePath = "${plugin.dataFolder.absolutePath}/database.db"
-                val memoryUrl = "jdbc:sqlite::memory:"
+            val sourceFile = File("${plugin.dataFolder.absolutePath}/database.db")
+            val backupFile = File(backupDir, "database_${System.currentTimeMillis()}.zip")
 
-                // インメモリDBの内容をファイルDBに書き込む
-                // インメモリは名前の通りプログラム終了時に消失するため、ファイルに書き込む必要がある
-                DriverManager.getConnection(memoryUrl).use { memoryConnection ->
-                    DriverManager.getConnection("jdbc:sqlite:$filePath").use { fileConnection ->
-                        // VACUUM INTOでインメモリDBの内容をファイルDBに書き込む
-                        memoryConnection.prepareStatement("VACUUM INTO '$filePath'").execute()
+            FileOutputStream(backupFile).use { fos ->
+                ZipOutputStream(fos).use { zos ->
+                    FileInputStream(sourceFile).use { fis ->
+                        val entry = ZipEntry(sourceFile.name)
+                        zos.putNextEntry(entry)
+                        fis.copyTo(zos)
                     }
                 }
+            }
 
-                Logger.info("In-memory database synchronized to file successfully!")
-            } catch (e: Exception) {
-                Logger.error("Failed to synchronize in-memory database to file!")
-                e.printStackTrace()
+            Logger.info("Database backup created successfully: ${backupFile.absolutePath}")
+
+            manageBackups(backupDir)
+        } catch (e: Exception) {
+            Logger.error("Failed to create database backup!")
+            e.printStackTrace()
+        }
+    }
+
+    private fun manageBackups(backupDir: File) {
+        val backupFiles = backupDir.listFiles()?.filter { it.isFile && it.extension == "zip" } ?: return
+
+        if (backupFiles.size > plugin.backupMaxSize) {
+            val filesToDelete = backupFiles.sortedBy { it.lastModified() }.take(backupFiles.size - plugin.backupMaxSize)
+            filesToDelete.forEach { file ->
+                if (file.delete()) {
+                    Logger.info("Deleted old backup: ${file.absolutePath}")
+                } else {
+                    Logger.warn("Failed to delete old backup: ${file.absolutePath}")
+                }
             }
         }
     }
@@ -85,7 +112,16 @@ class EGDB(private val plugin: EconGrowth) {
 
     //region Players
     fun insertNewPlayer(uuid: String) {
-        DBTaskQueue {
+        DBTaskQueue(ChangeInfo(
+            table = Players,
+            changes = mapOf(
+                Players.uuid to uuid,
+                Players.xp to 0.0f,
+                Players.level to 1,
+                Players.balance to 0.0,
+                Players.lastLogin to getTimeByCountry()
+            )
+        )) {
             transaction(memoryDb!!) {
                 Players.insert {
                     it[Players.uuid] = uuid
@@ -99,7 +135,12 @@ class EGDB(private val plugin: EconGrowth) {
     }
 
     fun updateLastLogin(uuid: String, lastLogin: String) {
-        DBTaskQueue {
+        DBTaskQueue(ChangeInfo(
+            table = Players,
+            changes = mapOf(
+                Players.lastLogin to lastLogin
+            )
+        )) {
             transaction(memoryDb!!) {
                 Players.update({ Players.uuid eq uuid }) {
                     it[Players.lastLogin] = lastLogin
@@ -109,7 +150,12 @@ class EGDB(private val plugin: EconGrowth) {
     }
 
     fun updateXp(uuid: String, operationWithValue: String) {
-        DBTaskQueue {
+        DBTaskQueue(ChangeInfo(
+            table = Players,
+            changes = mapOf(
+                Players.xp to 0.0f
+            )
+        )) {
             transaction(memoryDb!!) {
                 val currentXp = Players
                     .selectAll()
@@ -151,7 +197,12 @@ class EGDB(private val plugin: EconGrowth) {
     }
 
     fun updateLevel(uuid: String, level: Int) {
-        DBTaskQueue {
+        DBTaskQueue(ChangeInfo(
+            table = Players,
+            changes = mapOf(
+                Players.level to level
+            )
+        )) {
             transaction(memoryDb!!) {
                 Players.update({ Players.uuid eq uuid }) {
                     it[Players.level] = level
@@ -161,7 +212,12 @@ class EGDB(private val plugin: EconGrowth) {
     }
 
     fun updateBalance(uuid: String, balance: Double) {
-        DBTaskQueue {
+        DBTaskQueue(ChangeInfo(
+            table = Players,
+            changes = mapOf(
+                Players.balance to balance
+            )
+        )) {
             transaction(memoryDb!!) {
                 Players.update({ Players.uuid eq uuid }) {
                     it[Players.balance] = balance
@@ -173,7 +229,16 @@ class EGDB(private val plugin: EconGrowth) {
 
     //region PlacedBlockByPlayer
     fun insertNewBlock(x: Int, y: Int, z: Int, material: String, dim: String) {
-        DBTaskQueue {
+        DBTaskQueue(ChangeInfo(
+            table = PlacedBlockByPlayer,
+            changes = mapOf(
+                PlacedBlockByPlayer.x to x,
+                PlacedBlockByPlayer.y to y,
+                PlacedBlockByPlayer.z to z,
+                PlacedBlockByPlayer.material to material,
+                PlacedBlockByPlayer.dim to dim
+            )
+        )) {
             transaction(memoryDb!!) {
                 PlacedBlockByPlayer.insert {
                     it[PlacedBlockByPlayer.x] = x
@@ -204,7 +269,15 @@ class EGDB(private val plugin: EconGrowth) {
     }
 
     fun deleteBlockFromPlacedBlock(x: Int, y: Int, z: Int, dim: String) {
-        DBTaskQueue {
+        DBTaskQueue(ChangeInfo(
+            table = PlacedBlockByPlayer,
+            changes = mapOf(
+                PlacedBlockByPlayer.x to x,
+                PlacedBlockByPlayer.y to y,
+                PlacedBlockByPlayer.z to z,
+                PlacedBlockByPlayer.dim to dim
+            )
+        )) {
             transaction(memoryDb!!) {
                 PlacedBlockByPlayer.deleteWhere {
                     (PlacedBlockByPlayer.x eq x) and
@@ -218,6 +291,61 @@ class EGDB(private val plugin: EconGrowth) {
     //endregion
 
 //>================================================================<\\
+
+//>========================= [Event Handlers] ====================<\\
+
+    init {
+        handler<DatabaseChangeEvent> { event ->
+            val changeInfo = event.changeInfo
+            val table = changeInfo.table
+            val changes = changeInfo.changes
+
+            try {
+                transaction(connection!!) {
+                    if (changes.isEmpty()) {
+                        Logger.warn("No changes provided for table ${table.tableName}")
+                        return@transaction
+                    }
+
+                    val primaryKey = table.primaryKey?.columns?.firstOrNull()
+                    if (primaryKey == null) {
+                        Logger.error("No primary key defined for table ${table.tableName}")
+                        return@transaction
+                    }
+
+                    val primaryKeyColumn = primaryKey as Column<Any>
+                    val primaryKeyValue = changes[primaryKeyColumn] ?: run {
+                        Logger.error("Primary key value is missing in changes for table ${table.tableName}")
+                        return@transaction
+                    }
+
+                    val exists = table
+                        .selectAll()
+                        .where { (primaryKeyColumn).eq(primaryKeyValue) }
+                        .any()
+
+                    if (exists) {
+                        table.update({ (primaryKeyColumn).eq(primaryKeyValue) }) {
+                            changes.forEach { (column, value) ->
+                                it[column as Column<Any>] = column.castValue(value)
+                            }
+                        }
+                        Logger.info("Updated record in ${table.tableName}: $changes")
+                    } else {
+                        table.insert {
+                            changes.forEach { (column, value) ->
+                                it[column as Column<Any>] = column.castValue(value)
+                            }
+                        }
+                        Logger.info("Inserted new record in ${table.tableName}: $changes")
+                    }
+                }
+            } catch (e: Exception) {
+                Logger.error("Failed to sync changes to file DB for table ${table.tableName}: $changes")
+                e.printStackTrace()
+            }
+        }
+    }
 
     object Players : Table() {
         // 基本情報
