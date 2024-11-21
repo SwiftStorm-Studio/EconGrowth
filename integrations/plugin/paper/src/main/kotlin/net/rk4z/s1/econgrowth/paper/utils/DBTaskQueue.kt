@@ -1,6 +1,7 @@
 package net.rk4z.s1.econgrowth.paper.utils
 
 import net.rk4z.beacon.EventBus
+import net.rk4z.s1.econgrowth.paper.EconGrowth
 import net.rk4z.s1.econgrowth.paper.events.DatabaseChangeEvent
 import java.util.concurrent.Callable
 import java.util.concurrent.Executors
@@ -13,15 +14,23 @@ object DBTaskQueue {
     private val eventQueue = mutableListOf<ChangeInfo>()
 
     init {
-        scheduledExecutor.scheduleAtFixedRate({
-            synchronized(eventQueue) {
-                if (eventQueue.isNotEmpty()) {
-                    val eventsToSend = eventQueue.toList()
-                    eventQueue.clear()
-                    eventsToSend.forEach { EventBus.postAsync(DatabaseChangeEvent(it)) }
+        EconGrowth.get()?.let {
+            scheduledExecutor.scheduleAtFixedRate({
+                synchronized(eventQueue) {
+                    if (eventQueue.isNotEmpty()) {
+                        val eventsToSend = eventQueue.toList()
+                        eventQueue.clear()
+                        eventsToSend.forEach { EventBus.postAsync(DatabaseChangeEvent(it)) }
+                    }
                 }
-            }
-        }, 0, 1, TimeUnit.SECONDS)
+                /**
+                 * Perhaps this could be improved a bit more.
+                 * If anyone has a better idea regarding weight reduction, please let me know in PR.The goal of this mechanism is
+                 * to reduce the I/O load as much as possible and efficiently synchronize changes in the Queue to the file.
+                 * Currently, we use a fixed interval, but I'm thinking of dynamically changing as well.
+                 */
+            }, 0, it.syncToFileBatchInterval, TimeUnit.SECONDS)
+        }
     }
 
     operator fun <T> invoke(changeInfo: ChangeInfo? = null, task: () -> T): T {

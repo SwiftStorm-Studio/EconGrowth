@@ -112,16 +112,18 @@ class EGDB(private val plugin: EconGrowth) : IEventHandler {
 
     //region Players
     fun insertNewPlayer(uuid: String) {
-        DBTaskQueue(ChangeInfo(
-            table = Players,
-            changes = mapOf(
-                Players.uuid to uuid,
-                Players.xp to 0.0f,
-                Players.level to 1,
-                Players.balance to 0.0,
-                Players.lastLogin to getTimeByCountry()
+        DBTaskQueue(
+            ChangeInfo(
+                table = Players,
+                changes = mapOf(
+                    Players.uuid to uuid,
+                    Players.xp to 0.0f,
+                    Players.level to 1,
+                    Players.balance to 0.0,
+                    Players.lastLogin to getTimeByCountry()
+                )
             )
-        )) {
+        ) {
             transaction(memoryDb!!) {
                 Players.insert {
                     it[Players.uuid] = uuid
@@ -135,12 +137,14 @@ class EGDB(private val plugin: EconGrowth) : IEventHandler {
     }
 
     fun updateLastLogin(uuid: String, lastLogin: String) {
-        DBTaskQueue(ChangeInfo(
-            table = Players,
-            changes = mapOf(
-                Players.lastLogin to lastLogin
+        DBTaskQueue(
+            ChangeInfo(
+                table = Players,
+                changes = mapOf(
+                    Players.lastLogin to lastLogin
+                )
             )
-        )) {
+        ) {
             transaction(memoryDb!!) {
                 Players.update({ Players.uuid eq uuid }) {
                     it[Players.lastLogin] = lastLogin
@@ -150,12 +154,14 @@ class EGDB(private val plugin: EconGrowth) : IEventHandler {
     }
 
     fun updateXp(uuid: String, operationWithValue: String) {
-        DBTaskQueue(ChangeInfo(
-            table = Players,
-            changes = mapOf(
-                Players.xp to 0.0f
+        DBTaskQueue(
+            ChangeInfo(
+                table = Players,
+                changes = mapOf(
+                    Players.xp to 0.0f
+                )
             )
-        )) {
+        ) {
             transaction(memoryDb!!) {
                 val currentXp = Players
                     .selectAll()
@@ -197,12 +203,14 @@ class EGDB(private val plugin: EconGrowth) : IEventHandler {
     }
 
     fun updateLevel(uuid: String, level: Int) {
-        DBTaskQueue(ChangeInfo(
-            table = Players,
-            changes = mapOf(
-                Players.level to level
+        DBTaskQueue(
+            ChangeInfo(
+                table = Players,
+                changes = mapOf(
+                    Players.level to level
+                )
             )
-        )) {
+        ) {
             transaction(memoryDb!!) {
                 Players.update({ Players.uuid eq uuid }) {
                     it[Players.level] = level
@@ -212,12 +220,14 @@ class EGDB(private val plugin: EconGrowth) : IEventHandler {
     }
 
     fun updateBalance(uuid: String, balance: Double) {
-        DBTaskQueue(ChangeInfo(
-            table = Players,
-            changes = mapOf(
-                Players.balance to balance
+        DBTaskQueue(
+            ChangeInfo(
+                table = Players,
+                changes = mapOf(
+                    Players.balance to balance
+                )
             )
-        )) {
+        ) {
             transaction(memoryDb!!) {
                 Players.update({ Players.uuid eq uuid }) {
                     it[Players.balance] = balance
@@ -229,16 +239,18 @@ class EGDB(private val plugin: EconGrowth) : IEventHandler {
 
     //region PlacedBlockByPlayer
     fun insertNewBlock(x: Int, y: Int, z: Int, material: String, dim: String) {
-        DBTaskQueue(ChangeInfo(
-            table = PlacedBlockByPlayer,
-            changes = mapOf(
-                PlacedBlockByPlayer.x to x,
-                PlacedBlockByPlayer.y to y,
-                PlacedBlockByPlayer.z to z,
-                PlacedBlockByPlayer.material to material,
-                PlacedBlockByPlayer.dim to dim
+        DBTaskQueue(
+            ChangeInfo(
+                table = PlacedBlockByPlayer,
+                changes = mapOf(
+                    PlacedBlockByPlayer.x to x,
+                    PlacedBlockByPlayer.y to y,
+                    PlacedBlockByPlayer.z to z,
+                    PlacedBlockByPlayer.material to material,
+                    PlacedBlockByPlayer.dim to dim
+                )
             )
-        )) {
+        ) {
             transaction(memoryDb!!) {
                 PlacedBlockByPlayer.insert {
                     it[PlacedBlockByPlayer.x] = x
@@ -269,15 +281,17 @@ class EGDB(private val plugin: EconGrowth) : IEventHandler {
     }
 
     fun deleteBlockFromPlacedBlock(x: Int, y: Int, z: Int, dim: String) {
-        DBTaskQueue(ChangeInfo(
-            table = PlacedBlockByPlayer,
-            changes = mapOf(
-                PlacedBlockByPlayer.x to x,
-                PlacedBlockByPlayer.y to y,
-                PlacedBlockByPlayer.z to z,
-                PlacedBlockByPlayer.dim to dim
+        DBTaskQueue(
+            ChangeInfo(
+                table = PlacedBlockByPlayer,
+                changes = mapOf(
+                    PlacedBlockByPlayer.x to x,
+                    PlacedBlockByPlayer.y to y,
+                    PlacedBlockByPlayer.z to z,
+                    PlacedBlockByPlayer.dim to dim
+                )
             )
-        )) {
+        ) {
             transaction(memoryDb!!) {
                 PlacedBlockByPlayer.deleteWhere {
                     (PlacedBlockByPlayer.x eq x) and
