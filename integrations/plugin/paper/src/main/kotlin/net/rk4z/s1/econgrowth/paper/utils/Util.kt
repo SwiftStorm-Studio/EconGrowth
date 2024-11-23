@@ -7,26 +7,41 @@ import org.bukkit.Material
 import org.bukkit.craftbukkit.entity.CraftPlayer
 import org.bukkit.entity.Entity
 import org.bukkit.entity.Player
-import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.Column
+import org.jetbrains.exposed.sql.Table
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 data class ChangeInfo(
     val table: Table,
-    val changes: Map<Column<*>, Any>
+    val affectedColumns: List<Column<*>>
 )
 
-fun <T> Column<T>.castValue(value: Any): T {
-    return when (this.columnType) {
-        is IntegerColumnType -> value as T
-        is FloatColumnType -> value as T
-        is DoubleColumnType -> value as T
-        is TextColumnType -> value as T
-        is VarCharColumnType -> value as T
-        else -> throw IllegalArgumentException("Unsupported column type: ${this.columnType} for value: $value")
+val xpMap = generateLevelToXPMap(1200)
+
+fun generateLevelToXPMap(maxLevel: Int): Map<Int, Float> {
+    val levelToXPMap = mutableMapOf<Int, Float>()
+    var baseXP = 500.0f
+
+    for (level in 1..maxLevel) {
+        val growthFactor = when {
+            // 1~249: 2.5% add
+            level < 250 -> 1.025f
+            // 250~499: 1.5% add
+            level < 750 -> 1.015f
+            // 500~999: 1.2% add
+            level < 1000 -> 1.012f
+            // 1000~1199: 1.1% add
+            else -> 1.01f
+        }
+        levelToXPMap[level] = baseXP
+        baseXP *= growthFactor
     }
+
+    return levelToXPMap
 }
+
 
 enum class Country(val timeZone: String) {
     UTC("UTC"), // 世界標準時
@@ -82,6 +97,10 @@ fun getTimeFromUTC(utcTime: String, country: Country): String {
     } catch (e: Exception) {
         "Error: ${e.message}"
     }
+}
+
+fun Float.truncateToSecondDecimal(): Float {
+    return kotlin.math.floor(this * 100) / 100.0f
 }
 
 fun Entity.isPlayer(): Boolean {

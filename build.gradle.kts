@@ -28,8 +28,9 @@ allprojects {
                 implementation(exposed.dao)
                 implementation(exposed.json)
                 implementation(exposed.kotlin.datetime)
-                implementation(sqlite)
+                implementation(h2)
                 implementation(beacon)
+                implementation(caffeine)
                 implementation(swiftbase.core)
             }
         }

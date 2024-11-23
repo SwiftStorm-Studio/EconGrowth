@@ -38,10 +38,13 @@ paperApi = "1.21.3-R0.1-SNAPSHOT"
 minecraft = { module = "net.minecraft:minecraft", version.ref = "minecraft" }
 
 sqlite = { module = "org.xerial:sqlite-jdbc", version = "3.47.0.0" }
+h2 = { module = "com.h2database:h2", version = "2.3.232" }
 beacon = { module = "net.rk4z:beacon", version = "1.4.8" }
 
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }
 kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
+
+caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version = "3.1.8" }
 
 # > Exposed < #
 exposed-core = { module = "org.jetbrains.exposed:exposed-core", version.ref = "exposed" }
@@ -51,7 +54,7 @@ exposed-json = { module = "org.jetbrains.exposed:exposed-json", version.ref = "e
 exposed-kotlin-datetime = { module = "org.jetbrains.exposed:exposed-kotlin-datetime", version.ref = "exposed" }
 # > ------ < #
 
-swiftbase-core = { module = "net.rk4z.s1:swiftbase-core", version = "2.0.5" }
+swiftbase-core = { module = "net.rk4z.s1:swiftbase-core", version = "2.0.7" }
 swiftbase-paper = { module = "net.rk4z.s1:swiftbase-paper", version = "2.0.8" }
 swiftbase-fabric = { module = "net.rk4z.s1:swiftbase-fabric", version = "2.0.0" }
 

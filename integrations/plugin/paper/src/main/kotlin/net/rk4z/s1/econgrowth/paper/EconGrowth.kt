@@ -7,11 +7,12 @@ import org.slf4j.LoggerFactory
 class EconGrowth : PluginEntry(
     id = "econgrowth",
     packageName = "net.rk4z.s1.econgrowth",
-    isDebug = false,
+    isDebug = true,
     configFile = "config.yml",
-    availableLang = listOf("ja"),
+    availableLang = listOf("ja", "en"),
     langDir = "lang",
-    logger = LoggerFactory.getLogger(this::class.simpleName),
+    logger = LoggerFactory.getLogger(EconGrowth::class.simpleName),
+    enableUpdateChecker = false,
     modrinthID = "z5vRAQMP",
     serviceId = 23781
 ) {
@@ -24,20 +25,26 @@ class EconGrowth : PluginEntry(
         }
     }
 
-    var syncToFileBatchInterval: Long = 5
     var backupMaxSize: Int = 20
 
     override fun onLoadPre() {
-        EGDB = EGDB(this)
-        EventBus.initialize("net.rk4z.s1.econgrowth")
+        EGDB = EGDB()
+        EventBus.initialize(
+            packageNames = arrayOf("net.rk4z.s1.econgrowth"),
+            threadPoolSize = 2
+        )
+        EGDB.setUpDatabase()
     }
 
     override fun onLoadPost() {
         lc<Int>("database.backup.maxamount")?.let {
             backupMaxSize = it
         }
-        lc<Long>("database.sync.batchinterval")?.let {
-            syncToFileBatchInterval = it
+    }
+
+    override fun onEnablePost() {
+        server.pluginManager.apply {
+            registerEvents(EconGrowthEventListener(), this@EconGrowth)
         }
     }
 

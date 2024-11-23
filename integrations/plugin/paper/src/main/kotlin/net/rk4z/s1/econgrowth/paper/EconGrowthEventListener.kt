@@ -7,6 +7,7 @@ import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.block.BlockBreakEvent
 import org.bukkit.event.block.BlockPlaceEvent
+import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerQuitEvent
 
 @Suppress("unused")
@@ -14,12 +15,23 @@ class EconGrowthEventListener : Listener {
     val dataBase = EconGrowth.EGDB
 
     @EventHandler
+    fun onPlayerJoin(event: PlayerJoinEvent) {
+        val player = event.player
+        val uuid = player.uniqueId.toShortUUID().toShortString()
+
+        if (!dataBase.isPlayerRegistered(uuid)) {
+            dataBase.insertNewPlayer(uuid)
+        }
+    }
+
+    @EventHandler
     fun onPlayerQuit(event: PlayerQuitEvent) {
         val player = event.player
         val uuid = player.uniqueId.toShortUUID().toShortString()
 
-
-        dataBase.updateLastLogin(uuid, getTimeByCountry(Country.UTC))
+        if (dataBase.isPlayerRegistered(uuid)) {
+            dataBase.updateLastLogin(uuid, getTimeByCountry(Country.UTC))
+        }
     }
 
     @EventHandler
@@ -50,6 +62,6 @@ class EconGrowthEventListener : Listener {
 
         event.player.sendMessage("BlockHardness: ${block.type.hardness}")
 
-        //val xp = XPManager.calculateXP(event.player.uniqueId, isPlacedBlock, event)
+        //val xp = XPManager.calculateXP(event.player, isPlacedBlock, event)
     }
 }

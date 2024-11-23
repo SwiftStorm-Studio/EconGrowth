@@ -1,68 +1,99 @@
 package net.rk4z.s1.econgrowth.paper
 
-import net.rk4z.beacon.IEventHandler
-import net.rk4z.beacon.handler
-import net.rk4z.s1.econgrowth.paper.events.DatabaseChangeEvent
+import com.github.benmanes.caffeine.cache.Caffeine
 import net.rk4z.s1.econgrowth.paper.utils.ChangeInfo
 import net.rk4z.s1.econgrowth.paper.utils.DBTaskQueue
-import net.rk4z.s1.econgrowth.paper.utils.castValue
 import net.rk4z.s1.econgrowth.paper.utils.getTimeByCountry
 import net.rk4z.s1.swiftbase.core.Logger
-import net.rk4z.s1.swiftbase.core.logIfDebug
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
-import java.sql.DriverManager
+import java.util.concurrent.TimeUnit
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
-@Suppress("SqlNoDataSourceInspection", "ExposedReference", "unused")
-class EGDB(private val plugin: EconGrowth) : IEventHandler {
-    private var memoryDb: Database? = null
-    private var connection: Database? = null
+@Suppress("SqlNoDataSourceInspection", "unused")
+class EGDB() {
+    private val plugin = EconGrowth.get()!!
+    private val fileURL = plugin.dataFolder.absolutePath + "/database.db"
+    private val memoryURL = "jdbc:h2:mem:main;DB_CLOSE_DELAY=-1"
+    var memoryDB: Database? = null
+    var fileDB: Database? = null
 
-    fun connectToDatabase(): Boolean {
-        val filePath = "${plugin.dataFolder.absolutePath}/database.db"
-        val memoryUrl = "jdbc:sqlite::memory:"
+    private val playersCache = Caffeine.newBuilder()
+        .expireAfterWrite(20, TimeUnit.MINUTES)
+        .build<String, Map<String, Any>>()
 
-        return try {
-            val file = File(filePath)
+    private val blocksCache = Caffeine.newBuilder()
+        .expireAfterWrite(20, TimeUnit.MINUTES)
+        .build<String, Boolean>()
 
-            if (!file.exists()) {
-                Logger.logIfDebug("Database file not found. Initializing a new file database.")
-                connection = Database.connect("jdbc:sqlite:$filePath", driver = "org.sqlite.JDBC").also { db ->
-                    transaction(db) {
-                        SchemaUtils.create(
-                            Players,
-                            PlacedBlockByPlayer
-                        )
-                        Logger.info("Initialized new database with required tables.")
+    fun setUpDatabase() {
+        try {
+            fileDB = Database.connect(
+                "jdbc:h2:file:${plugin.dataFolder.absolutePath}/database;DB_CLOSE_DELAY=-1;",
+                driver = "org.h2.Driver"
+            )
+
+            memoryDB = Database.connect(
+                "jdbc:h2:mem:main;DB_CLOSE_DELAY=-1;",
+                driver = "org.h2.Driver"
+            )
+
+            transaction(fileDB!!) {
+                SchemaUtils.create(Players, PlacedBlockByPlayer)
+            }
+
+            transaction(memoryDB!!) {
+                SchemaUtils.create(Players, PlacedBlockByPlayer)
+            }
+
+            try {
+                var filePlayersData: List<ResultRow> = listOf()
+                var fileBlocksData: List<ResultRow> = listOf()
+
+                transaction(fileDB!!) {
+                    // ファイルDBからデータを取得
+                    filePlayersData = Players.selectAll().toList()
+                    fileBlocksData = PlacedBlockByPlayer.selectAll().toList()
+                }
+
+                transaction(memoryDB!!) {
+                    filePlayersData.forEach { row ->
+                        Players.insertIgnore {
+                            it[uuid] = row[uuid]
+                            it[totalXP] = row[totalXP]
+                            it[xp] = row[xp]
+                            it[level] = row[level]
+                            it[balance] = row[balance]
+                            it[lastLogin] = row[lastLogin]
+                        }
+                    }
+
+                    fileBlocksData.forEach { row ->
+                        PlacedBlockByPlayer.insertIgnore {
+                            it[x] = row[x]
+                            it[y] = row[y]
+                            it[z] = row[z]
+                            it[material] = row[material]
+                            it[dim] = row[dim]
+                        }
                     }
                 }
-            } else {
-                Logger.info("File database found. Connecting...")
-                connection = Database.connect("jdbc:sqlite:$filePath", driver = "org.sqlite.JDBC")
+
+                Logger.info("Data synchronized from File DB to Memory DB.")
+            } catch (e: Exception) {
+                Logger.error("Failed to synchronize data from File DB to Memory DB!")
+                e.printStackTrace()
             }
 
-            // インメモリDBの起動
-            memoryDb = Database.connect(memoryUrl, driver = "org.sqlite.JDBC")
-
-            // ファイルDBのデータをインメモリDBに移行
-            DriverManager.getConnection(memoryUrl).use { memoryConnection ->
-                DriverManager.getConnection("jdbc:sqlite:$filePath").use { fileConnection ->
-                    fileConnection.prepareStatement("VACUUM INTO ':memory:'").execute()
-                }
-            }
-
-            Logger.info("Successfully loaded database into memory!")
-            true
+            Logger.info("Databases initialized successfully! (File DB and Memory DB)")
         } catch (e: Exception) {
-            Logger.error("Could not connect to the SQLite database!")
+            Logger.error("Failed to setup databases!")
             e.printStackTrace()
-            false
         }
     }
 
@@ -111,127 +142,177 @@ class EGDB(private val plugin: EconGrowth) : IEventHandler {
 //>========================= [Functions] ====================<\\
 
     //region Players
+    // 新規プレイヤーを登録
     fun insertNewPlayer(uuid: String) {
         DBTaskQueue(
             ChangeInfo(
                 table = Players,
-                changes = mapOf(
-                    Players.uuid to uuid,
-                    Players.xp to 0.0f,
-                    Players.level to 1,
-                    Players.balance to 0.0,
-                    Players.lastLogin to getTimeByCountry()
+                affectedColumns = listOf(
+                    Players.uuid,
+                    Players.totalXP,
+                    Players.xp,
+                    Players.level,
+                    Players.balance,
+                    Players.lastLogin
                 )
             )
         ) {
-            transaction(memoryDb!!) {
+            transaction(memoryDB!!) {
                 Players.insert {
                     it[Players.uuid] = uuid
+                    it[totalXP] = 0.0f
                     it[xp] = 0.0f
                     it[level] = 1
                     it[balance] = 0.0
                     it[lastLogin] = getTimeByCountry()
                 }
+
+                playersCache.put(
+                    uuid, mapOf(
+                        "level" to 1,
+                        "totalXP" to 0.0f,
+                        "xp" to 0.0f,
+                        "balance" to 0.0,
+                        "lastLogin" to getTimeByCountry()
+                    )
+                )
             }
         }
     }
 
+    // プレイヤーが登録済みかどうかを確認
+    fun isPlayerRegistered(uuid: String): Boolean {
+        if (playersCache.getIfPresent(uuid)?.isNotEmpty() == true) {
+            return true
+        }
+
+        return transaction(memoryDB!!) {
+            Players.selectAll()
+                .where { Players.uuid eq uuid }
+                .singleOrNull() != null
+        }
+    }
+
+    // プレイヤーの最終ログイン日時を更新
     fun updateLastLogin(uuid: String, lastLogin: String) {
         DBTaskQueue(
             ChangeInfo(
                 table = Players,
-                changes = mapOf(
-                    Players.lastLogin to lastLogin
+                affectedColumns = listOf(
+                    Players.lastLogin
                 )
             )
         ) {
-            transaction(memoryDb!!) {
+            transaction(memoryDB!!) {
                 Players.update({ Players.uuid eq uuid }) {
                     it[Players.lastLogin] = lastLogin
                 }
+
+                val cachedData = playersCache.getIfPresent(uuid)?.toMutableMap() ?: mutableMapOf()
+                cachedData["lastLogin"] = lastLogin
+                playersCache.put(uuid, cachedData)
             }
         }
     }
 
+    // 現レベルのXPと総XPを更新し、必要であればレベルアップ処理を行う
     fun updateXp(uuid: String, operationWithValue: String) {
         DBTaskQueue(
             ChangeInfo(
                 table = Players,
-                changes = mapOf(
-                    Players.xp to 0.0f
+                affectedColumns = listOf(
+                    Players.totalXP,
+                    Players.xp
                 )
             )
         ) {
-            transaction(memoryDb!!) {
-                val currentXp = Players
-                    .selectAll()
+            transaction(memoryDB!!) {
+                val playerData = Players.selectAll()
                     .where { Players.uuid eq uuid }
-                    .singleOrNull()?.get(Players.xp) ?: 0f
-
-                val regex = """([+\-*/])([0-9.]+)""".toRegex()
-                val match = regex.matchEntire(operationWithValue)
-                    ?: throw IllegalArgumentException("Invalid format: $operationWithValue")
-
-                val operator = match.groupValues[1]
-                val value = match.groupValues[2].toFloat()
-
-                val newXp = when (operator) {
-                    "+" -> currentXp + value
-                    "-" -> currentXp - value
-                    "*" -> currentXp * value
-                    "/" -> if (value != 0f) currentXp / value else currentXp // 0での除算を防ぐ
-                    else -> throw IllegalArgumentException("Unsupported operator: $operator")
-                }
-
-                // データベースを更新
-                Players.update({ Players.uuid eq uuid }) {
-                    it[xp] = newXp
-                }
+                    .singleOrNull()
+                val currentXp = playerData?.get(Players.xp) ?: 0f
+                val currentTotalXp = playerData?.get(Players.totalXP) ?: 0f
+                val currentLevel = playerData?.get(Players.level) ?: 1
             }
         }
     }
 
+    // 現レベルのXPと総XPをPairで返す
+    fun getXp(uuid: String): Pair<Float, Float> {
+        val cachedData = playersCache.getIfPresent(uuid)
+        if (cachedData != null) {
+            val xp = cachedData["xp"] as? Float ?: 0f
+            val totalXP = cachedData["totalXP"] as? Float ?: 0f
+            return Pair(xp, totalXP)
+        }
+
+        return transaction(memoryDB!!) {
+            Players
+                .selectAll()
+                .where { Players.uuid eq uuid }
+                .singleOrNull()
+                ?.let {
+                    Pair(it[Players.xp], it[Players.totalXP])
+                } ?: Pair(0f, 0f)
+        }
+    }
+
+    // 現在のプレイヤーレベルを取得
     fun getLevel(uuid: String): Int {
-        return DBTaskQueue {
-            transaction(memoryDb!!) {
-                Players
-                    .selectAll()
-                    .where { Players.uuid eq uuid }
-                    .singleOrNull()?.get(Players.level) ?: 0
-            }
+        val cachedData = playersCache.getIfPresent(uuid)
+        if (cachedData != null) {
+            return cachedData["level"] as? Int ?: 0
+        }
+
+        return transaction(memoryDB!!) {
+            Players
+                .selectAll()
+                .where { Players.uuid eq uuid }
+                .singleOrNull()
+                ?.get(Players.level) ?: 0
         }
     }
 
+    // プレイヤーレベルを更新
     fun updateLevel(uuid: String, level: Int) {
         DBTaskQueue(
             ChangeInfo(
                 table = Players,
-                changes = mapOf(
-                    Players.level to level
+                affectedColumns = listOf(
+                    Players.level
                 )
             )
         ) {
-            transaction(memoryDb!!) {
+            transaction(memoryDB!!) {
                 Players.update({ Players.uuid eq uuid }) {
                     it[Players.level] = level
                 }
+
+                val cachedData = playersCache.getIfPresent(uuid)?.toMutableMap() ?: mutableMapOf()
+                cachedData["level"] = level
+                playersCache.put(uuid, cachedData)
             }
         }
     }
 
+    // プレイヤーの残高を取得
     fun updateBalance(uuid: String, balance: Double) {
         DBTaskQueue(
             ChangeInfo(
                 table = Players,
-                changes = mapOf(
-                    Players.balance to balance
+                affectedColumns = listOf(
+                    Players.balance
                 )
             )
         ) {
-            transaction(memoryDb!!) {
+            transaction(memoryDB!!) {
                 Players.update({ Players.uuid eq uuid }) {
                     it[Players.balance] = balance
                 }
+
+                val cachedData = playersCache.getIfPresent(uuid)?.toMutableMap() ?: mutableMapOf()
+                cachedData["balance"] = balance
+                playersCache.put(uuid, cachedData)
             }
         }
     }
@@ -242,16 +323,16 @@ class EGDB(private val plugin: EconGrowth) : IEventHandler {
         DBTaskQueue(
             ChangeInfo(
                 table = PlacedBlockByPlayer,
-                changes = mapOf(
-                    PlacedBlockByPlayer.x to x,
-                    PlacedBlockByPlayer.y to y,
-                    PlacedBlockByPlayer.z to z,
-                    PlacedBlockByPlayer.material to material,
-                    PlacedBlockByPlayer.dim to dim
+                affectedColumns = listOf(
+                    PlacedBlockByPlayer.x,
+                    PlacedBlockByPlayer.y,
+                    PlacedBlockByPlayer.z,
+                    PlacedBlockByPlayer.material,
+                    PlacedBlockByPlayer.dim
                 )
             )
         ) {
-            transaction(memoryDb!!) {
+            transaction(memoryDB!!) {
                 PlacedBlockByPlayer.insert {
                     it[PlacedBlockByPlayer.x] = x
                     it[PlacedBlockByPlayer.y] = y
@@ -259,24 +340,30 @@ class EGDB(private val plugin: EconGrowth) : IEventHandler {
                     it[PlacedBlockByPlayer.material] = material
                     it[PlacedBlockByPlayer.dim] = dim
                 }
+
+                val cacheKey = "$x:$y:$z:$dim"
+                blocksCache.put(cacheKey, true)
             }
         }
     }
 
     fun isPlayerPlacedBlock(x: Int, y: Int, z: Int, dim: String): Boolean {
-        return DBTaskQueue {
-            transaction(memoryDb!!) {
-                PlacedBlockByPlayer
-                    .selectAll()
-                    .where {
-                        (PlacedBlockByPlayer.x eq x) and
-                                (PlacedBlockByPlayer.y eq y) and
-                                (PlacedBlockByPlayer.z eq z) and
-                                (PlacedBlockByPlayer.dim eq dim)
-                    }
-                    .limit(1)
-                    .any()
-            }
+        val cacheKey = "$x:$y:$z:$dim"
+
+        if (blocksCache.getIfPresent(cacheKey) == true) {
+            return true
+        }
+
+        return transaction(memoryDB!!) {
+            PlacedBlockByPlayer
+                .selectAll()
+                .where {
+                    (PlacedBlockByPlayer.x eq x) and
+                            (PlacedBlockByPlayer.y eq y) and
+                            (PlacedBlockByPlayer.z eq z) and
+                            (PlacedBlockByPlayer.dim eq dim)
+                }
+                .singleOrNull() != null
         }
     }
 
@@ -284,21 +371,24 @@ class EGDB(private val plugin: EconGrowth) : IEventHandler {
         DBTaskQueue(
             ChangeInfo(
                 table = PlacedBlockByPlayer,
-                changes = mapOf(
-                    PlacedBlockByPlayer.x to x,
-                    PlacedBlockByPlayer.y to y,
-                    PlacedBlockByPlayer.z to z,
-                    PlacedBlockByPlayer.dim to dim
+                affectedColumns = listOf(
+                    PlacedBlockByPlayer.x,
+                    PlacedBlockByPlayer.y,
+                    PlacedBlockByPlayer.z,
+                    PlacedBlockByPlayer.dim
                 )
             )
         ) {
-            transaction(memoryDb!!) {
+            transaction(memoryDB!!) {
                 PlacedBlockByPlayer.deleteWhere {
                     (PlacedBlockByPlayer.x eq x) and
                             (PlacedBlockByPlayer.y eq y) and
                             (PlacedBlockByPlayer.z eq z) and
                             (PlacedBlockByPlayer.dim eq dim)
                 }
+
+                val cacheKey = "$x:$y:$z:$dim"
+                blocksCache.invalidate(cacheKey)
             }
         }
     }
@@ -306,65 +396,11 @@ class EGDB(private val plugin: EconGrowth) : IEventHandler {
 
 //>================================================================<\\
 
-//>========================= [Event Handlers] ====================<\\
-
-    init {
-        handler<DatabaseChangeEvent> { event ->
-            val changeInfo = event.changeInfo
-            val table = changeInfo.table
-            val changes = changeInfo.changes
-
-            try {
-                transaction(connection!!) {
-                    if (changes.isEmpty()) {
-                        Logger.warn("No changes provided for table ${table.tableName}")
-                        return@transaction
-                    }
-
-                    val primaryKey = table.primaryKey?.columns?.firstOrNull()
-                    if (primaryKey == null) {
-                        Logger.error("No primary key defined for table ${table.tableName}")
-                        return@transaction
-                    }
-
-                    val primaryKeyColumn = primaryKey as Column<Any>
-                    val primaryKeyValue = changes[primaryKeyColumn] ?: run {
-                        Logger.error("Primary key value is missing in changes for table ${table.tableName}")
-                        return@transaction
-                    }
-
-                    val exists = table
-                        .selectAll()
-                        .where { (primaryKeyColumn).eq(primaryKeyValue) }
-                        .any()
-
-                    if (exists) {
-                        table.update({ (primaryKeyColumn).eq(primaryKeyValue) }) {
-                            changes.forEach { (column, value) ->
-                                it[column as Column<Any>] = column.castValue(value)
-                            }
-                        }
-                        Logger.info("Updated record in ${table.tableName}: $changes")
-                    } else {
-                        table.insert {
-                            changes.forEach { (column, value) ->
-                                it[column as Column<Any>] = column.castValue(value)
-                            }
-                        }
-                        Logger.info("Inserted new record in ${table.tableName}: $changes")
-                    }
-                }
-            } catch (e: Exception) {
-                Logger.error("Failed to sync changes to file DB for table ${table.tableName}: $changes")
-                e.printStackTrace()
-            }
-        }
-    }
-
     object Players : Table() {
         // 基本情報
         val uuid = varchar("uuid", 22) // プレイヤーのUUID（ShortUUID形式）
-        val xp = float("xp") // プレイヤーの総経験値
+        val totalXP = float("total_xp") // プレイヤーの総経験値
+        val xp = float("xp") // プレイヤーの経験値(現在のレベル)
         val level = integer("level") // プレイヤーのレベル
         val balance = double("balance") // プレイヤーの残高
         val lastLogin = text("last_login") // 最終ログイン日時。正確にはログアウト時に記録される
