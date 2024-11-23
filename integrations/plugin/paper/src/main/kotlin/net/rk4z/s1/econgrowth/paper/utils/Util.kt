@@ -18,31 +18,6 @@ data class ChangeInfo(
     val affectedColumns: List<Column<*>>
 )
 
-val xpMap = generateLevelToXPMap(1200)
-
-fun generateLevelToXPMap(maxLevel: Int): Map<Int, Float> {
-    val levelToXPMap = mutableMapOf<Int, Float>()
-    var baseXP = 500.0f
-
-    for (level in 1..maxLevel) {
-        val growthFactor = when {
-            // 1~249: 2.5% add
-            level < 250 -> 1.025f
-            // 250~499: 1.5% add
-            level < 750 -> 1.015f
-            // 500~999: 1.2% add
-            level < 1000 -> 1.012f
-            // 1000~1199: 1.1% add
-            else -> 1.01f
-        }
-        levelToXPMap[level] = baseXP
-        baseXP *= growthFactor
-    }
-
-    return levelToXPMap
-}
-
-
 enum class Country(val timeZone: String) {
     UTC("UTC"), // 世界標準時
     US("America/New_York"), // アメリカ
