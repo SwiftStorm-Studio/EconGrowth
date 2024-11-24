@@ -2,6 +2,8 @@ package net.rk4z.s1.econgrowth.paper.utils
 
 import net.minecraft.world.entity.animal.Animal
 import net.rk4z.s1.econgrowth.paper.EconGrowth
+import net.rk4z.s1.swiftbase.core.Logger
+import net.rk4z.s1.swiftbase.core.logIfDebug
 import org.bukkit.block.Block
 import org.bukkit.entity.*
 import java.util.*
@@ -22,7 +24,7 @@ object XPManager {
         val levelToXPMap = mutableMapOf<Int, Float>()
 
         when (type) {
-            XPType.PROFESSION ->{
+            XPType.PROFESSION -> {
                 for (level in 1..maxLevel) {
                     var baseXP = 500.0f
                     val growthFactor = getGrowthFactor(level, type)
@@ -30,6 +32,7 @@ object XPManager {
                     baseXP *= growthFactor
                 }
             }
+
             XPType.PLAYER -> {
                 for (level in 1..maxLevel) {
                     var baseXP = 1500.0f
@@ -51,6 +54,7 @@ object XPManager {
                 level < 1000 -> 1.012f
                 else -> 1.01f
             }
+
             XPType.PLAYER -> when {
                 level < 250 -> 1.03f
                 level < 750 -> 1.0275f
@@ -155,9 +159,45 @@ object XPManager {
             val finalXP = (baseXP * bonus()).coerceAtMost(playerXpMap[playerLevel]!! * 0.15f)
             return finalXP.truncateToSecondDecimal()
         }
+
+        //TODO
+        fun calculateXPForPlayTime(
+            player: Player,
+            playTimeMillis: Long
+        ): Float {
+            val playerLevel = dataBase.getLevel(player.uniqueId.toString())
+            val playTimeMinutes = playTimeMillis / 60000.0f
+
+            val baseXP = playerXpMap[playerLevel]!! * when {
+                playerLevel < 250 -> 0.015f
+                playerLevel < 750 -> 0.0125f
+                else -> 0.01f
+            }
+
+            val timeFactor = when {
+                playerLevel < 250 -> 0.05f
+                playerLevel < 750 -> 0.03f
+                playerLevel < 1000 -> 0.02f
+                else -> 0.01f
+            }
+
+            // ボーナス計算
+            val bonusFactor = if (playTimeMinutes > 60) 1.1f else 1.0f
+
+            // 最終XP計算
+            val xpGained = (baseXP * playTimeMinutes * timeFactor * bonusFactor)
+                .coerceAtLeast(10.0f) // 最低限のXPを保証
+                .truncateToSecondDecimal()
+
+            // ログを残す（オプション）
+            Logger.logIfDebug("Player ${player.name} earned $xpGained XP for $playTimeMinutes minutes of playtime.")
+            return xpGained
+        }
+
     }
 
     // TODO: 職業ごとに特定のタスクで倍率をかけたりする
     object ProfessionLevel {
+
     }
 }
