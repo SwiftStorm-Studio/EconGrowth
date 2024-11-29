@@ -31,6 +31,7 @@ tasks.named<Jar>("jar") {
 
 paper {
     name = "${rootProject.name}-${project.name}"
+    description = project.description.toString()
     version = project.version.toString()
     apiVersion = "1.21"
     main = "net.rk4z.s1.econgrowth.paper.EconGrowth"

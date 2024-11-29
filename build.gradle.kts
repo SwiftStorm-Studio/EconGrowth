@@ -12,6 +12,7 @@ allprojects {
 
     group = "net.rk4z.s1"
     version = "1.0.0"
+    description = "A completely new project combining economic, skill and level elements."
 
     repositories {
         mavenCentral()
