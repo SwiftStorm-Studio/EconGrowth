@@ -2,8 +2,8 @@ package net.rk4z.s1.econgrowth.paper.utils
 
 import net.rk4z.beacon.IEventHandler
 import net.rk4z.beacon.handler
+import net.rk4z.s1.econgrowth.core.events.DatabaseChangeEvent
 import net.rk4z.s1.econgrowth.paper.EconGrowth
-import net.rk4z.s1.econgrowth.paper.events.DatabaseChangeEvent
 import net.rk4z.s1.swiftbase.core.Logger
 import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.insert

@@ -1,9 +1,10 @@
-package net.rk4z.s1.econgrowth.paper
+package net.rk4z.s1.econgrowth.core
 
 import com.github.benmanes.caffeine.cache.Caffeine
-import net.rk4z.s1.econgrowth.paper.utils.ChangeInfo
-import net.rk4z.s1.econgrowth.paper.utils.DBTaskQueue
-import net.rk4z.s1.econgrowth.paper.utils.getTimeByCountry
+import net.rk4z.s1.econgrowth.core.utils.ChangeInfo
+import net.rk4z.s1.econgrowth.core.utils.DBTaskQueue
+import net.rk4z.s1.econgrowth.core.utils.ShortUUID
+import net.rk4z.s1.econgrowth.core.utils.getTimeByCountry
 import net.rk4z.s1.swiftbase.core.Logger
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
@@ -16,9 +17,11 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
 @Suppress("SqlNoDataSourceInspection", "unused")
-class EGDB() {
-    private val plugin = EconGrowth.get()!!
-    private val fileURL = plugin.dataFolder.absolutePath + "/database.db"
+class EGDB(
+    val dataFolder: String,
+    val backupMaxSize: Int
+) {
+    private val fileURL = "$dataFolder/database.db"
     private val memoryURL = "jdbc:h2:mem:main;DB_CLOSE_DELAY=-1"
     var memoryDB: Database? = null
     var fileDB: Database? = null
@@ -33,12 +36,12 @@ class EGDB() {
 
     fun setUpDatabase() {
         try {
-            fileDB = Database.connect(
-                "jdbc:h2:file:${plugin.dataFolder.absolutePath}/database;DB_CLOSE_DELAY=-1;",
+            fileDB = Database.Companion.connect(
+                "jdbc:h2:file:${dataFolder}/database;DB_CLOSE_DELAY=-1;",
                 driver = "org.h2.Driver"
             )
 
-            memoryDB = Database.connect(
+            memoryDB = Database.Companion.connect(
                 "jdbc:h2:mem:main;DB_CLOSE_DELAY=-1;",
                 driver = "org.h2.Driver"
             )
@@ -99,10 +102,10 @@ class EGDB() {
 
     fun backupDatabase() {
         try {
-            val backupDir = File("${plugin.dataFolder.absolutePath}/dataBackup")
+            val backupDir = File("${dataFolder}/dataBackup")
             if (!backupDir.exists()) backupDir.mkdirs()
 
-            val sourceFile = File("${plugin.dataFolder.absolutePath}/database.db")
+            val sourceFile = File("${dataFolder}/database.db")
             val backupFile = File(backupDir, "database_${System.currentTimeMillis()}.zip")
 
             FileOutputStream(backupFile).use { fos ->
@@ -127,8 +130,8 @@ class EGDB() {
     private fun manageBackups(backupDir: File) {
         val backupFiles = backupDir.listFiles()?.filter { it.isFile && it.extension == "zip" } ?: return
 
-        if (backupFiles.size > plugin.backupMaxSize) {
-            val filesToDelete = backupFiles.sortedBy { it.lastModified() }.take(backupFiles.size - plugin.backupMaxSize)
+        if (backupFiles.size > backupMaxSize) {
+            val filesToDelete = backupFiles.sortedBy { it.lastModified() }.take(backupFiles.size - backupMaxSize)
             filesToDelete.forEach { file ->
                 if (file.delete()) {
                     Logger.info("Deleted old backup: ${file.absolutePath}")
@@ -143,7 +146,8 @@ class EGDB() {
 
     //region Players
     // 新規プレイヤーを登録
-    fun insertNewPlayer(uuid: String) {
+    fun insertNewPlayer(uuid: ShortUUID) {
+        val p0 = uuid.toShortString()
         DBTaskQueue(
             ChangeInfo(
                 table = Players,
@@ -159,7 +163,7 @@ class EGDB() {
         ) {
             transaction(memoryDB!!) {
                 Players.insert {
-                    it[Players.uuid] = uuid
+                    it[Players.uuid] = p0
                     it[totalXP] = 0.0f
                     it[xp] = 0.0f
                     it[level] = 1
@@ -168,7 +172,7 @@ class EGDB() {
                 }
 
                 playersCache.put(
-                    uuid, mapOf(
+                    p0, mapOf(
                         "level" to 1,
                         "totalXP" to 0.0f,
                         "xp" to 0.0f,
@@ -181,20 +185,22 @@ class EGDB() {
     }
 
     // プレイヤーが登録済みかどうかを確認
-    fun isPlayerRegistered(uuid: String): Boolean {
-        if (playersCache.getIfPresent(uuid)?.isNotEmpty() == true) {
+    fun isPlayerRegistered(uuid: ShortUUID): Boolean {
+        val p0 = uuid.toShortString()
+        if (playersCache.getIfPresent(p0)?.isNotEmpty() == true) {
             return true
         }
 
         return transaction(memoryDB!!) {
             Players.selectAll()
-                .where { Players.uuid eq uuid }
+                .where { Players.uuid eq p0 }
                 .singleOrNull() != null
         }
     }
 
     // プレイヤーの最終ログイン日時を更新
-    fun updateLastLogin(uuid: String, lastLogin: String) {
+    fun updateLastLogin(uuid: ShortUUID, lastLogin: String) {
+        val p0 = uuid.toShortString()
         DBTaskQueue(
             ChangeInfo(
                 table = Players,
@@ -204,13 +210,13 @@ class EGDB() {
             )
         ) {
             transaction(memoryDB!!) {
-                Players.update({ Players.uuid eq uuid }) {
+                Players.update({ Players.uuid eq p0 }) {
                     it[Players.lastLogin] = lastLogin
                 }
 
-                val cachedData = playersCache.getIfPresent(uuid)?.toMutableMap() ?: mutableMapOf()
+                val cachedData = playersCache.getIfPresent(p0)?.toMutableMap() ?: mutableMapOf()
                 cachedData["lastLogin"] = lastLogin
-                playersCache.put(uuid, cachedData)
+                playersCache.put(p0, cachedData)
             }
         }
     }
@@ -400,7 +406,7 @@ class EGDB() {
         // 基本情報
         val uuid = varchar("uuid", 22) // プレイヤーのUUID（ShortUUID形式）
         val totalXP = float("total_xp") // プレイヤーの総経験値
-        val xp = float("xp") // プレイヤーの経験値(現在のレベル)
+        val xp = float("xp") // プレイヤーの経験値(現在のレベルでの)
         val level = integer("level") // プレイヤーのレベル
         val balance = double("balance") // プレイヤーの残高
         val lastLogin = text("last_login") // 最終ログイン日時。正確にはログアウト時に記録される

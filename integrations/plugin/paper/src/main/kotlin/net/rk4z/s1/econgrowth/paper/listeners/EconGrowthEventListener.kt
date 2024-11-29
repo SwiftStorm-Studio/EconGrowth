@@ -1,8 +1,9 @@
-package net.rk4z.s1.econgrowth.paper
+package net.rk4z.s1.econgrowth.paper.listeners
 
+import net.rk4z.s1.econgrowth.core.utils.Country
+import net.rk4z.s1.econgrowth.core.utils.getTimeByCountry
 import net.rk4z.s1.econgrowth.core.utils.toShortUUID
-import net.rk4z.s1.econgrowth.paper.utils.Country
-import net.rk4z.s1.econgrowth.paper.utils.getTimeByCountry
+import net.rk4z.s1.econgrowth.paper.EconGrowth
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.block.BlockBreakEvent
@@ -12,12 +13,12 @@ import org.bukkit.event.player.PlayerQuitEvent
 
 @Suppress("unused")
 class EconGrowthEventListener : Listener {
-    val dataBase = EconGrowth.EGDB
+    val dataBase = EconGrowth.Companion.EGDB
 
     @EventHandler
     fun onPlayerJoin(event: PlayerJoinEvent) {
         val player = event.player
-        val uuid = player.uniqueId.toShortUUID().toShortString()
+        val uuid = player.uniqueId.toShortUUID()
 
         if (!dataBase.isPlayerRegistered(uuid)) {
             dataBase.insertNewPlayer(uuid)
@@ -27,7 +28,7 @@ class EconGrowthEventListener : Listener {
     @EventHandler
     fun onPlayerQuit(event: PlayerQuitEvent) {
         val player = event.player
-        val uuid = player.uniqueId.toShortUUID().toShortString()
+        val uuid = player.uniqueId.toShortUUID()
 
         if (dataBase.isPlayerRegistered(uuid)) {
             dataBase.updateLastLogin(uuid, getTimeByCountry(Country.UTC))

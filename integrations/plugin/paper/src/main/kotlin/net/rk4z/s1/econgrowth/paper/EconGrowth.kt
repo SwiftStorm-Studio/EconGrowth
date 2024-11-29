@@ -1,6 +1,8 @@
 package net.rk4z.s1.econgrowth.paper
 
 import net.rk4z.beacon.EventBus
+import net.rk4z.s1.econgrowth.core.EGDB
+import net.rk4z.s1.econgrowth.paper.listeners.EconGrowthEventListener
 import net.rk4z.s1.swiftbase.paper.PluginEntry
 import org.slf4j.LoggerFactory
 
@@ -28,7 +30,10 @@ class EconGrowth : PluginEntry(
     var backupMaxSize: Int = 20
 
     override fun onLoadPre() {
-        EGDB = EGDB()
+        EGDB = EGDB(
+            this.dataFolder.absolutePath,
+            backupMaxSize
+        )
         EventBus.initialize(
             packageNames = arrayOf("net.rk4z.s1.econgrowth"),
             threadPoolSize = 2

@@ -1,7 +1,7 @@
-package net.rk4z.s1.econgrowth.paper.utils
+package net.rk4z.s1.econgrowth.core.utils
 
 import net.rk4z.beacon.EventBus
-import net.rk4z.s1.econgrowth.paper.events.DatabaseChangeEvent
+import net.rk4z.s1.econgrowth.core.events.DatabaseChangeEvent
 import net.rk4z.s1.swiftbase.core.Logger
 import java.util.concurrent.Callable
 import java.util.concurrent.CopyOnWriteArrayList
