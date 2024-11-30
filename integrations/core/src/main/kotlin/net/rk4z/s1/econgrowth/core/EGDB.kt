@@ -264,8 +264,9 @@ class EGDB(
     }
 
     // 現在のプレイヤーレベルを取得
-    fun getLevel(uuid: String): Int {
-        val cachedData = playersCache.getIfPresent(uuid)
+    fun getLevel(uuid: ShortUUID): Int {
+        val p0 = uuid.toShortString()
+        val cachedData = playersCache.getIfPresent(p0)
         if (cachedData != null) {
             return cachedData["level"] as? Int ?: 0
         }
@@ -273,14 +274,14 @@ class EGDB(
         return transaction(memoryDB!!) {
             Players
                 .selectAll()
-                .where { Players.uuid eq uuid }
+                .where { Players.uuid eq p0 }
                 .singleOrNull()
                 ?.get(Players.level) ?: 0
         }
     }
 
     // プレイヤーレベルを更新
-    fun updateLevel(uuid: String, level: Int) {
+    fun updateLevel(uuid: ShortUUID, level: Int) {
         DBTaskQueue(
             ChangeInfo(
                 table = Players,
@@ -289,21 +290,23 @@ class EGDB(
                 )
             )
         ) {
+            val p0 = uuid.toShortString()
+
             transaction(memoryDB!!) {
-                Players.update({ Players.uuid eq uuid }) {
+                Players.update({ Players.uuid eq p0 }) {
                     it[Players.level] = level
                 }
 
-                val cachedData = playersCache.getIfPresent(uuid)?.toMutableMap() ?: mutableMapOf()
+                val cachedData = playersCache.getIfPresent(p0)?.toMutableMap() ?: mutableMapOf()
                 cachedData["level"] = level
-                playersCache.put(uuid, cachedData)
+                playersCache.put(p0, cachedData)
             }
         }
     }
 
     // プレイヤーの残高を取得
-    fun updateBalance(uuid: String, balance: Double) {
-        DBTaskQueue(
+    fun updateBalance(uuid: ShortUUID, balance: Double) {
+        DBTaskQueue (
             ChangeInfo(
                 table = Players,
                 affectedColumns = listOf(
@@ -311,14 +314,16 @@ class EGDB(
                 )
             )
         ) {
+            val p0 = uuid.toShortString()
+
             transaction(memoryDB!!) {
-                Players.update({ Players.uuid eq uuid }) {
+                Players.update({ Players.uuid eq p0 }) {
                     it[Players.balance] = balance
                 }
 
-                val cachedData = playersCache.getIfPresent(uuid)?.toMutableMap() ?: mutableMapOf()
+                val cachedData = playersCache.getIfPresent(p0)?.toMutableMap() ?: mutableMapOf()
                 cachedData["balance"] = balance
-                playersCache.put(uuid, cachedData)
+                playersCache.put(p0, cachedData)
             }
         }
     }
