@@ -30,20 +30,23 @@ class EconGrowth : PluginEntry(
     var backupMaxSize: Int = 20
 
     override fun onLoadPre() {
-        EGDB = EGDB(
-            this.dataFolder.absolutePath,
-            backupMaxSize
-        )
         EventBus.initialize(
             packageNames = arrayOf("net.rk4z.s1.econgrowth"),
             threadPoolSize = 2
         )
-        EGDB.setUpDatabase()
     }
 
+    // この時点でファイル等の生成が完了
     override fun onLoadPost() {
         lc<Int>("database.backup.maxamount")?.let {
             backupMaxSize = it
+        }
+
+        EGDB = EGDB(
+            this.dataFolder.absolutePath,
+            backupMaxSize
+        ).also {
+            it.setUpDatabase()
         }
     }
 

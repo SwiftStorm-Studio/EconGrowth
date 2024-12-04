@@ -13,7 +13,7 @@ import org.bukkit.event.player.PlayerQuitEvent
 
 @Suppress("unused")
 class EconGrowthEventListener : Listener {
-    val dataBase = EconGrowth.Companion.EGDB
+    val dataBase = EconGrowth.EGDB
 
     @EventHandler
     fun onPlayerJoin(event: PlayerJoinEvent) {

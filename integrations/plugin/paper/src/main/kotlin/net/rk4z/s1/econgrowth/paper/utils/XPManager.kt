@@ -3,8 +3,6 @@ package net.rk4z.s1.econgrowth.paper.utils
 import net.minecraft.world.entity.animal.Animal
 import net.rk4z.s1.econgrowth.core.utils.toShortUUID
 import net.rk4z.s1.econgrowth.paper.EconGrowth
-import net.rk4z.s1.swiftbase.core.Logger
-import net.rk4z.s1.swiftbase.core.logIfDebug
 import org.bukkit.block.Block
 import org.bukkit.entity.*
 import java.util.*

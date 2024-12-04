@@ -306,7 +306,7 @@ class EGDB(
 
     // プレイヤーの残高を取得
     fun updateBalance(uuid: ShortUUID, balance: Double) {
-        DBTaskQueue (
+        DBTaskQueue(
             ChangeInfo(
                 table = Players,
                 affectedColumns = listOf(
