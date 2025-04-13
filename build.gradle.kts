@@ -10,7 +10,7 @@ plugins {
 allprojects {
     apply(plugin = "org.jetbrains.kotlin.jvm")
 
-    group = "net.rk4z.s1"
+    group = "dev.swiftstorm"
     version = "1.0.0"
     description = "A completely new project combining economic, skill and level elements."
 
@@ -18,6 +18,9 @@ allprojects {
         mavenCentral()
         mavenLocal()
         maven("https://repo.papermc.io/repository/maven-public/")
+        maven("https://maven.fabricmc.net/")
+        maven("https://maven.architectury.dev/")
+        maven("https://files.minecraftforge.net/maven/")
     }
 
     afterEvaluate {
@@ -32,7 +35,6 @@ allprojects {
                 implementation(h2)
                 implementation(beacon)
                 implementation(caffeine)
-                implementation(swiftbase.core)
             }
         }
     }

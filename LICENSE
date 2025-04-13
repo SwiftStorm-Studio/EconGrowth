@@ -1,36 +1,61 @@
-S1-CU License 1.0
 Terms and Conditions for Use, Reproduction, and Distribution
 
 1. Definitions
-・"Licensor" refers to the original developer or entity that publishes the software under this license.
-・"Contributor" refers to any individual or entity who contributes to the project via Pull Requests (PRs) or Issues.
-・"You" (or "Your") refers to the individual or entity exercising the permissions granted by this License.
-・"Software" refers to the project or repository that is licensed under this License.
+"Licensor" refers to the original developer or entity that publishes the software
+under this license.
+"Contributor" refers to any individual or entity who contributes to the project
+via Pull Requests (PRs) or Issues.
+"You" (or "Your") refers to the individual or entity exercising the permissions
+granted by this License.
 
 2. Grant of License
-Subject to the terms and conditions of this License, the Licensor hereby grants You a perpetual, worldwide, non-exclusive, royalty-free license to use, reproduce, prepare derivative works of, publicly display, publicly perform, sublicense, and distribute the software and such derivative works for any purpose, including commercial use.
+Subject to the terms and conditions of this License, the Licensor hereby grants You
+a perpetual, worldwide, non-exclusive, royalty-free license to use, reproduce, prepare
+derivative works of, publicly display, publicly perform, sublicense, and distribute the
+software and such derivative works for any purpose, including commercial use.
 
 3. Contributor Recognition
-If You contribute to the project through Pull Requests or Issues, You agree to have Your contribution acknowledged in a Contributors file within the repository. However, if You do not wish to have Your name or contribution listed, You may request to be excluded, and the Licensor will comply with Your request.
+If You contribute to the project through Pull Requests or Issues, You agree to have
+Your contribution acknowledged in a Contributors file within the repository. However,
+if You do not wish to have Your name or contribution listed, You may request to be
+excluded, and the Licensor will comply with Your request.
 
-4. Commercial Use
-Any use of this software for commercial purposes must include clear attribution to the original developer or SwiftStormStudio in any accompanying documentation, product information, or visible notices.
+4. Commercial Use and Attribution Requirement
+Any use of this software for commercial purposes must include clear attribution to
+the original developer(s) in one of the following ways:
+- In the software's user interface or about section.
+- In accompanying documentation or product information.
+- On a publicly accessible website detailing the product or service.
 
 5. Disclaimer of Liability
-This software is provided "AS IS", without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose, and noninfringement. In no event shall the Licensor be liable for any claim, damages, or other liability, whether in an action of contract, tort, or otherwise, arising from, out of, or in connection with the software or the use or other dealings in the software.
+This software is provided "AS IS", without warranty of any kind, express or implied,
+including but not limited to the warranties of merchantability, fitness for a particular
+purpose, and noninfringement. In no event shall the Licensor be liable for any claim,
+damages, or other liability, whether in an action of contract, tort, or otherwise,
+arising from, out of, or in connection with the software or the use or other dealings
+in the software.
 
 6. Forking and License Retention
 You may fork the project under the following conditions:
+- The fork must retain this License in its entirety, and no changes to the License
+  are permitted.
+- Any modifications or derivative works must also follow this License.
 
-The fork must retain this License in its entirety, and no changes to the License are permitted.
-Any modifications or derivative works must also follow this License.
 7. Patent Rights
-Subject to the terms and conditions of this License, each Contributor grants to You a perpetual, worldwide, non-exclusive, royalty-free license to make, have made, use, offer to sell, sell, import, and otherwise transfer the work and derivative works based upon the work. If You institute patent litigation (including a cross-claim or counterclaim in a lawsuit) against any entity alleging that the work or a contribution incorporated within the work constitutes patent infringement, then any patent licenses granted to You under this License for that work shall terminate as of the date such litigation is filed.
+Subject to the terms and conditions of this License, each Contributor grants to You
+a perpetual, worldwide, non-exclusive, royalty-free license to make, have made, use,
+offer to sell, sell, import, and otherwise transfer the work and derivative works based
+upon the work. If You institute patent litigation (including a cross-claim or counterclaim
+in a lawsuit) against any entity alleging that the work or a contribution incorporated
+within the work constitutes patent infringement, then any patent licenses granted to You
+under this License for that work shall terminate as of the date such litigation is filed.
 
 8. Termination of License
-This License will remain in effect until one of the following occurs:
+This License will remain in effect indefinitely for all versions released while the LICENSE
+file was present in the repository. Removing the LICENSE file only affects future versions
+and does not impact software already released under this License.
 
-The LICENSE file is removed from the repository.
-The GitHub Organization of SwiftStormStudio explicitly declares disbandment. In the event of termination, all rights granted to You under this License shall cease, and You must immediately stop using the software.
 9. License Updates
-The right to update or modify this License rests solely with the original developer or SwiftStormStudio. No third party is allowed to change or alter this License in any way.
+The right to update or modify this License rests solely with the original developer(s).
+No third party is allowed to change or alter this License in any way. However, any updates
+or modifications will not retroactively affect versions released under a previous License.

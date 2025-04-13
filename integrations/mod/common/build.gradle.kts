@@ -6,10 +6,7 @@ architectury {
 @Suppress("UnstableApiUsage")
 dependencies {
     minecraft(libs.minecraft)
-    mappings(loom.layered {
-        mappings(libs.fabric.yarn)
-        mappings(libs.neoforge.yarn)
-    })
+    mappings(loom.officialMojangMappings())
 
     modImplementation(libs.fabric.loader)
     modImplementation(libs.architectury.api)

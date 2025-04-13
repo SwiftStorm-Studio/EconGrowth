@@ -11,8 +11,7 @@ dependencies {
     paperweight.paperDevBundle(libs.versions.paperApi.get())
     compileOnly(libs.paper.api)
 
-    implementation("net.rk4z:igf:1.0.1")
-    implementation(libs.swiftbase.paper)
+    implementation("net.ririrfa:igf:+")
 }
 
 tasks.named<Jar>("jar") {
@@ -34,7 +33,7 @@ paper {
     description = project.description.toString()
     version = project.version.toString()
     apiVersion = "1.21"
-    main = "net.rk4z.s1.econgrowth.paper.EconGrowth"
+    main = "dev.swiftstorm.econgrowth.paper.EconGrowth"
     generateLibrariesJson = true
     foliaSupported = false
     contributors = listOf("Lars", "cotrin_d8")

@@ -33,13 +33,13 @@ repositories {
     }
 }
 
-@Suppress("UnstableApiUsage")
 dependencies {
     minecraft(libs.minecraft)
-    mappings(loom.layered {
-        mappings(libs.fabric.yarn)
-        mappings(libs.neoforge.yarn)
-    })
+    mappings(loom.officialMojangMappings())
+//    mappings(loom.layered {
+//        mappings(libs.fabric.yarn)
+//        mappings(loom.officialMojangMappings())
+//    })
 
     neoForge(libs.neoforge.api)
     modImplementation(libs.architectury.neoforge)
