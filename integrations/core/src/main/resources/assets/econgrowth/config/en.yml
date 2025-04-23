@@ -1,5 +1,0 @@
-database:
-  backup:
-    # Determines the maximum number of backups.
-    # When this number is exceeded, old backup files are deleted.
-    maxamount: 20
