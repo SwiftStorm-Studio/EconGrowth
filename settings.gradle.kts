@@ -5,15 +5,23 @@ pluginManagement {
         gradlePluginPortal()
         google()
         mavenCentral()
+        maven("https://maven.fabricmc.net/")
+        maven("https://maven.architectury.dev/")
+        maven("https://files.minecraftforge.net/maven/")
     }
 }
 
-dependencyResolutionManagement {
-    repositories {
-        mavenCentral()
-        mavenLocal()
-        maven("https://repo.swiftstorm.dev/maven2")
-        maven("https://jitpack.io")
-        maven("https://repo.papermc.io/repository/maven-public/")
-    }
-}
+rootProject.name = "EconGrowth"
+
+include(":integrations")
+include(":integrations:core")
+
+include(":integrations:mod")
+include(":integrations:mod:common")
+include(":integrations:mod:fabric")
+include(":integrations:mod:quilt")
+
+
+include(":integrations:plugin")
+include(":integrations:plugin:paper")
+include(":integrations:plugin:velocity")
