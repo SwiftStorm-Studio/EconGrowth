@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.shadow)
     alias(libs.plugins.akkara.plugin) apply false
+    alias(libs.plugins.fabric.loom) apply false
 }
 
 allprojects {
@@ -49,15 +50,29 @@ subprojects {
         }
 
         ECONGROWTH_FABRIC -> {
+            apply(plugin = "fabric-loom")
+
             version = ECONGROWTH_FABRIC_VERSION
+
+            dependencies {
+                implementation(project(":$ECONGROWTH_CORE"))
+            }
         }
 
         ECONGROWTH_PAPER -> {
             version = ECONGROWTH_PAPER_VERSION
+
+            dependencies {
+                implementation(project(":$ECONGROWTH_CORE"))
+            }
         }
 
         ECONGROWTH_VELOCITY -> {
             version = ECONGROWTH_VELOCITY_VERSION
+
+            dependencies {
+                implementation(project(":$ECONGROWTH_CORE"))
+            }
         }
     }
 }

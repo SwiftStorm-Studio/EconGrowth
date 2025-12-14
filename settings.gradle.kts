@@ -3,6 +3,7 @@ pluginManagement {
         gradlePluginPortal()
         mavenCentral()
         maven("https://repo.swiftstorm.dev/maven2/") { name = "SwiftStorm Repository" }
+        maven("https://maven.fabricmc.net/") { name = "FabricMC" }
     }
 }
 
