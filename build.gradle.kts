@@ -35,7 +35,7 @@ val ECONGROWTH_VELOCITY_VERSION = "0.0.1"
 subprojects {
     when (name) {
         ECONGROWTH_BUILDER -> {
-            apply(plugin = "dev.swiftstorm.akkaradb-plugin")
+
         }
 
         ECONGROWTH_CORE -> {
