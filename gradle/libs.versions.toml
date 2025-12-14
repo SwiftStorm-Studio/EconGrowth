@@ -1,0 +1,9 @@
+[versions]
+kotlin = "2.2.21"
+akkara-plugin = "0.1.0"
+shadow = "9.2.2"
+
+[plugins]
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+akkara-plugin = { id = "dev.swiftstorm.akkaradb-plugin", version.ref = "akkara-plugin" }
+shadow = { id = "com.gradleup.shadow", version.ref = "shadow" }
